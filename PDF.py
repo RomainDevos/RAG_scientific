@@ -1,3 +1,7 @@
+"""
+Classe pour représenter un document PDF.
+"""
+
 from dataclasses import dataclass
 import pymupdf
 import hashlib

@@ -1,3 +1,8 @@
+"""
+Chunking des documents PDF pour le RAG.
+"""
+
+
 import re
 from dataclasses import dataclass
 
