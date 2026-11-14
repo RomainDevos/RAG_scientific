@@ -10,9 +10,9 @@ from weaviate.classes.init import Auth
 
 from search import search
 
-load_dotenv()  # charge OPENAI_API_KEY depuis le fichier .env
+load_dotenv() 
 
-ANSWER_MODEL = "gpt-6-luna"  # le modèle le moins cher de la gamme actuelle d'OpenAI
+ANSWER_MODEL = "gpt-6-luna"  
 
 INSTRUCTIONS = """Tu es un assistant qui répond à des questions sur des articles scientifiques.
 Règles :
