@@ -1,0 +1,702 @@
+[
+    {
+        "querry_id": "1",
+        "querry": "Comment fonctionne la partie encodeur du Transformer ?",
+        "reference": "Elle est composée de 6 couches identiques, chacune avec deux sous-couches : une couche d'attention multi-head, puis un réseau feed-forward. Chaque sous-couche est entourée d'une connexion résiduelle, suivie d'une normalisation : LayerNorm(x + Sublayer(x)).",
+        "response": "Dans DETR, l’encodeur reçoit les caractéristiques visuelles produites par le CNN. Une convolution 1×1 réduit leur nombre de canaux, puis les dimensions spatiales sont aplaties pour former une séquence de caractéristiques. (Transformer encoder, p. 6-7)\n\nComme le Transformer ne tient pas compte de l’ordre des éléments par lui-même, on ajoute un encodage positionnel spatial aux caractéristiques. Dans chaque couche d’attention multi-tête, cet encodage est ajouté aux requêtes et aux clés. (Transformer encoder, p. 6-7 ; A.3 Detailed architecture, p. 22)\n\nChaque couche d’encodeur comprend une attention multi-tête auto-régressive sur la séquence et un réseau feed-forward. L’encodeur transforme ainsi la séquence d’entrée en représentations continues, qui sont ensuite transmises au décodeur. (Transformer encoder, p. 6-7 ; extrait sur l’architecture encodeur-décodeur, p. 2-3)",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "3.1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "Transformer encoder. First, a 1x1 convolution reduces the channel dimension of the high-level activation map f from C to a smaller dimension d. creating a new feature map z0 ∈Rd×H×W . The encoder expects a sequence as input, hence we collapse the spatial dimensions of z0 into one dimension, resulting in a d×HW feature map. Each encoder layer has a standard architecture and consists of a multi-head self-attention module and a feed forward network (FFN). Since the transformer architecture is permutation-invariant, we supplement it with ﬁxed positional encodings [31,3] that are added to the input of each attention layer. We defer to the supplementary material the detailed deﬁnition of the architecture, which follows the one described in [47].",
+                "text": "2 The input images are batched together, applying 0-padding adequately to ensure they all have the same dimensions (H0, W0) as the largest image of the batch. End-to-End Object Detection with Transformers 7 CNN set of image features transformer encoder … … positional encoding + transformer decoder class, box class, box no object no object FFN FFN FFN FFN object queries backbone encoder decoder prediction heads Fig. 2: DETR uses a conventional CNN backbone to learn a 2D representation of an input image. The model ﬂattens it and supplements it with a positional encoding before passing it into a transformer encoder. A transformer decoder then takes as input a small ﬁxed number of learned positional embeddings, which we call object queries, and additionally attends to the encoder output. We pass each output embedding of the decoder to a shared feed forward network (FFN) that predicts either a detection (class and bounding box) or a “no object” class."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x1, ..., xn) to a sequence of continuous representations z = (z1, ..., zn). Given z, the decoder then generates an output sequence (y1, ..., ym) of symbols one element at a time. At each step the model is auto-regressive [10], consuming the previously generated symbols as additional input when generating the next.",
+                "text": "2 Figure 1: The Transformer - model architecture. The Transformer follows this overall architecture using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder, shown in the left and right halves of Figure 1, respectively."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "A.3 Detailed architecture",
+                "text": "The detailed description of the transformer used in DETR, with positional encodings passed at every attention layer, is given in Fig. 10. Image features from the CNN backbone are passed through the transformer encoder, together with spatial positional encoding that are added to queries and keys at every multihead self-attention layer. Then, the decoder receives queries (initially set to zero), output positional encoding (object queries), and encoder memory, and produces the ﬁnal set of predicted class labels and bounding boxes through multiple multihead self-attention and decoder-encoder attention. The ﬁrst self-attention layer in the ﬁrst decoder layer can be skipped. Add & Norm FFN Add & Norm Multi-Head Self-Attention + + K Q V N× Image features Encoder Multi-Head Self-Attention Add & Norm Multi-Head Attention Add & Norm FFN Add & Norm + + K Q V + + K Q M× Decoder V Spatial positional encoding Object queries FFN FFN Class Bounding Box Fig. 10: Architecture of DETR’s transformer. Please, see Section A.3 for details."
+            }
+        ]
+    },
+    {
+        "querry_id": "2",
+        "querry": "Pourquoi divise-t-on les produits scalaires par la racine de d_k dans l'attention ?",
+        "reference": "Pour de grandes valeurs de d_k, les produits scalaires deviennent grands et poussent le softmax dans des zones où les gradients sont extrêmement faibles. Le facteur 1/√d_k compense cet effet.",
+        "response": "Quand \\(d_k\\) est grand, les produits scalaires peuvent prendre de grandes valeurs et pousser le softmax dans des régions où ses gradients sont très faibles. On les divise donc par \\(\\sqrt{d_k}\\) pour contrer cet effet. (3.2.1 Scaled Dot-Product Attention, p. 4)",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "3.2.1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "Multi-head The general form of multi-head attention with M heads of dimen- sion d is a function with the following signature (using d′ = d M , and giving matrix/tensors sizes in underbrace)",
+                "text": "mh-attn : Xq |{z} d×Nq , Xkv |{z} d×Nkv , T |{z} M×3×d′×d , L |{z} d×d 7→ ˜Xq |{z} d×Nq (3) where Xq is the query sequence of length Nq, Xkv is the key-value sequence of length Nkv (with the same number of channels d for simplicity of exposition), T is the weight tensor to compute the so-called query, key and value embeddings, and L is a projection matrix. The output is the same size as the query sequence. To ﬁx the vocabulary before giving details, multi-head self-attention (mh-s-attn) is the special case Xq = Xkv, i.e. mh-s-attn(X, T, L) = mh-attn(X, X, T, L) . (4) The multi-head attention is simply the concatenation of M single attention heads followed by a projection with L. The common practice [47] is to use residual connections, dropout and layer normalization. In other words, denoting ˜Xq = mh-attn(Xq, Xkv, T, L) and ¯¯X(q) the concatenation of attention heads, we have X′ q = [attn(Xq, Xkv, T1); ...; attn(Xq, Xkv, TM)] (5) ˜Xq = layernorm \u0000 Xq + dropout(LX′ q) \u0001 , (6) where [;] denotes concatenation on the channel axis."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "3.2.1 Scaled Dot-Product Attention",
+                "text": "We call our particular attention \"Scaled Dot-Product Attention\" (Figure 2). The input consists of queries and keys of dimension dk, and values of dimension dv. We compute the dot products of the query with all keys, divide each by √dk, and apply a softmax function to obtain the weights on the values. In practice, we compute the attention function on a set of queries simultaneously, packed together into a matrix Q. The keys and values are also packed together into matrices K and V . We compute the matrix of outputs as: Attention(Q, K, V ) = softmax(QKT √dk )V (1) The two most commonly used attention functions are additive attention [2], and dot-product (multiplicative) attention. Dot-product attention is identical to our algorithm, except for the scaling factor of 1 √dk . Additive attention computes the compatibility function using a feed-forward network with a single hidden layer. While the two are similar in theoretical complexity, dot-product attention is much faster and more space-efficient in practice, since it can be implemented using highly optimized matrix multiplication code. While for small values of dk the two mechanisms perform similarly, additive attention outperforms dot product attention without scaling for larger values of dk [3]. We suspect that for large values of dk, the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients 4. To counteract this effect, we scale the dot products by 1 √dk ."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            }
+        ]
+    },
+    {
+        "querry_id": "3",
+        "querry": "Quel matériel a été utilisé pour entraîner le Transformer ?",
+        "reference": "Une machine équipée de 8 GPU NVIDIA P100.",
+        "response": "Les extraits ne précisent pas quel matériel a été utilisé pour entraîner le Transformer. Ils mentionnent les GPU K80, K40, M40 et P100 pour leurs valeurs de TFLOPS, sans indiquer lequel a servi à l’entraînement (section 6.2, p. 8-9).",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "5.2",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "Transformer encoder. First, a 1x1 convolution reduces the channel dimension of the high-level activation map f from C to a smaller dimension d. creating a new feature map z0 ∈Rd×H×W . The encoder expects a sequence as input, hence we collapse the spatial dimensions of z0 into one dimension, resulting in a d×HW feature map. Each encoder layer has a standard architecture and consists of a multi-head self-attention module and a feed forward network (FFN). Since the transformer architecture is permutation-invariant, we supplement it with ﬁxed positional encodings [31,3] that are added to the input of each attention layer. We defer to the supplementary material the detailed deﬁnition of the architecture, which follows the one described in [47].",
+                "text": "2 The input images are batched together, applying 0-padding adequately to ensure they all have the same dimensions (H0, W0) as the largest image of the batch. End-to-End Object Detection with Transformers 7 CNN set of image features transformer encoder … … positional encoding + transformer decoder class, box class, box no object no object FFN FFN FFN FFN object queries backbone encoder decoder prediction heads Fig. 2: DETR uses a conventional CNN backbone to learn a 2D representation of an input image. The model ﬂattens it and supplements it with a positional encoding before passing it into a transformer encoder. A transformer decoder then takes as input a small ﬁxed number of learned positional embeddings, which we call object queries, and additionally attends to the encoder output. We pass each output embedding of the decoder to a shared feed forward network (FFN) that predicts either a detection (class and bounding box) or a “no object” class."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x1, ..., xn) to a sequence of continuous representations z = (z1, ..., zn). Given z, the decoder then generates an output sequence (y1, ..., ym) of symbols one element at a time. At each step the model is auto-regressive [10], consuming the previously generated symbols as additional input when generating the next.",
+                "text": "2 Figure 1: The Transformer - model architecture. The Transformer follows this overall architecture using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder, shown in the left and right halves of Figure 1, respectively."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "6.2 Model Variations",
+                "text": "To evaluate the importance of different components of the Transformer, we varied our base model in different ways, measuring the change in performance on English-to-German translation on the 5We used values of 2.8, 3.7, 6.0 and 9.5 TFLOPS for K80, K40, M40 and P100, respectively. 8 Table 3: Variations on the Transformer architecture. Unlisted values are identical to those of the base model. All metrics are on the English-to-German translation development set, newstest2013. Listed perplexities are per-wordpiece, according to our byte-pair encoding, and should not be compared to per-word perplexities. N dmodel dff h dk dv Pdrop ϵls train PPL BLEU params steps (dev) (dev) ×106 base 6 512 2048 8 64 64 0.1 0.1 100K 4.92 25.8 65 (A) 1 512 512 5.29 24.9 4 128 128 5.00 25.5 16 32 32 4.91 25.8 32 16 16 5.01 25.4 (B) 16 5.16 25.1 58 32 5.01 25.4 60 (C) 2 6.11 23.7 36 4 5.19 25.3 50 8 4.88 25.5 80 256 32 32 5.75 24.5 28 1024 128 128 4.66 26.0 168 1024 5.12 25.4 53 4096 4.75 26.2 90 (D)"
+            }
+        ]
+    },
+    {
+        "querry_id": "4",
+        "querry": "Quel optimiseur a été utilisé pour entraîner le Transformer, et avec quels paramètres ?",
+        "reference": "Adam avec β1=0.9, β2=0.98 et ε=10^-9",
+        "response": "Je ne trouve pas dans les extraits quel optimiseur a été utilisé ni ses paramètres.",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "5.3",
+        "retrieved": [
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "Parser Training WSJ 23 F1 Vinyals & Kaiser el al. (2014) [37] WSJ only, discriminative 88.3 Petrov et al. (2006) [29] WSJ only, discriminative 90.4 Zhu et al. (2013) [40] WSJ only, discriminative 90.4 Dyer et al. (2016) [8] WSJ only, discriminative 91.7 Transformer (4 layers) WSJ only, discriminative 91.3 Zhu et al. (2013) [40] semi-supervised 91.3 Huang & Harper (2009) [14] semi-supervised 91.3 McClosky et al. (2006) [26] semi-supervised 92.1 Vinyals & Kaiser el al. (2014) [37] semi-supervised 92.1 Transformer (4 layers) semi-supervised 92.7 Luong et al. (2015) [23] multi-task 93.0 Dyer et al. (2016) [8] generative 93.3",
+                "text": "increased the maximum output length to input length + 300. We used a beam size of 21 and α = 0.3 for both WSJ only and the semi-supervised setting. Our results in Table 4 show that despite the lack of task-specific tuning our model performs surprisingly well, yielding better results than all previously reported models with the exception of the Recurrent Neural Network Grammar [8]. In contrast to RNN sequence-to-sequence models [37], the Transformer outperforms the BerkeleyParser [29] even when training only on the WSJ training set of 40K sentences."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Transformer encoder. First, a 1x1 convolution reduces the channel dimension of the high-level activation map f from C to a smaller dimension d. creating a new feature map z0 ∈Rd×H×W . The encoder expects a sequence as input, hence we collapse the spatial dimensions of z0 into one dimension, resulting in a d×HW feature map. Each encoder layer has a standard architecture and consists of a multi-head self-attention module and a feed forward network (FFN). Since the transformer architecture is permutation-invariant, we supplement it with ﬁxed positional encodings [31,3] that are added to the input of each attention layer. We defer to the supplementary material the detailed deﬁnition of the architecture, which follows the one described in [47].",
+                "text": "2 The input images are batched together, applying 0-padding adequately to ensure they all have the same dimensions (H0, W0) as the largest image of the batch. End-to-End Object Detection with Transformers 7 CNN set of image features transformer encoder … … positional encoding + transformer decoder class, box class, box no object no object FFN FFN FFN FFN object queries backbone encoder decoder prediction heads Fig. 2: DETR uses a conventional CNN backbone to learn a 2D representation of an input image. The model ﬂattens it and supplements it with a positional encoding before passing it into a transformer encoder. A transformer decoder then takes as input a small ﬁxed number of learned positional embeddings, which we call object queries, and additionally attends to the encoder output. We pass each output embedding of the decoder to a shared feed forward network (FFN) that predicts either a detection (class and bounding box) or a “no object” class."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "6.2 Model Variations",
+                "text": "To evaluate the importance of different components of the Transformer, we varied our base model in different ways, measuring the change in performance on English-to-German translation on the 5We used values of 2.8, 3.7, 6.0 and 9.5 TFLOPS for K80, K40, M40 and P100, respectively. 8 Table 3: Variations on the Transformer architecture. Unlisted values are identical to those of the base model. All metrics are on the English-to-German translation development set, newstest2013. Listed perplexities are per-wordpiece, according to our byte-pair encoding, and should not be compared to per-word perplexities. N dmodel dff h dk dv Pdrop ϵls train PPL BLEU params steps (dev) (dev) ×106 base 6 512 2048 8 64 64 0.1 0.1 100K 4.92 25.8 65 (A) 1 512 512 5.29 24.9 4 128 128 5.00 25.5 16 32 32 4.91 25.8 32 16 16 5.01 25.4 (B) 16 5.16 25.1 58 32 5.01 25.4 60 (C) 2 6.11 23.7 36 4 5.19 25.3 50 8 4.88 25.5 80 256 32 32 5.75 24.5 28 1024 128 128 4.66 26.0 168 1024 5.12 25.4 53 4096 4.75 26.2 90 (D)"
+            }
+        ]
+    },
+    {
+        "querry_id": "5",
+        "querry": "Comment est calculé le learning rate pendant l'entraînement du Transformer ?",
+        "reference": "Le learning rate est calculé avec la formule : lr = d_model^(-0.5) * min(step_num^(-0.5), step_num * warmup_steps^(-1.5))",
+        "response": "Le learning rate suit la formule  \n\\[\n\\text{lrate}=d_{\\text{model}}^{-0,5}\\times\\min(\\text{step\\_num}^{-0,5},\\ \\text{step\\_num}\\times\\text{warmup\\_steps}^{-1,5}).\n\\]\nIl augmente linéairement pendant les 4 000 premières étapes, puis diminue proportionnellement à l’inverse de la racine carrée du numéro d’étape. (5.3 Optimizer, p. 7)",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "5.3",
+        "retrieved": [
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "5.3 Optimizer",
+                "text": "We used the Adam optimizer [20] with β1 = 0.9, β2 = 0.98 and ϵ = 10−9. We varied the learning rate over the course of training, according to the formula: lrate = d−0.5 model · min(step_num−0.5, step_num · warmup_steps−1.5) (3) This corresponds to increasing the learning rate linearly for the first warmup_steps training steps, and decreasing it thereafter proportionally to the inverse square root of the step number. We used warmup_steps = 4000."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "DETR 86/28 41M 42.0 62.4 44.2 20.5 45.8 61.1 DETR-DC5 187/12 41M 43.3 63.1 45.9 22.5 47.3 61.1 DETR-R101 152/20 60M 43.5 63.8 46.4 21.9 48.0 61.8 DETR-DC5-R101 253/10 60M 44.9 64.7 47.7 23.7 49.5 62.3",
+                "text": "time, some slots predict empty class. To optimize for AP, we override the prediction of these slots with the second highest scoring class, using the corresponding conﬁdence. This improves AP by 2 points compared to ﬁltering out empty slots. Other training hyperparameters can be found in section A.4. For our ablation experiments we use training schedule of 300 epochs with a learning rate drop by a factor of 10 after 200 epochs, where a single epoch is a pass over all training images once. Training the baseline model for 300 epochs on 16 V100 GPUs takes 3 days, with 4 images per GPU (hence a total batch size of 64). For the longer schedule used to compare with Faster R-CNN we train for 500 epochs with learning rate drop after 400 epochs. This schedule adds 1.5 AP compared to the shorter schedule."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Technical details. We train DETR with AdamW [26] setting the initial trans- former’s learning rate to 10−4, the backbone’s to 10−5, and weight decay to 10−4. All transformer weights are initialized with Xavier init [11], and the backbone is with ImageNet-pretrained ResNet model [15] from torchvision with frozen batchnorm layers. We report results with two diﬀerent backbones: a ResNet- 50 and a ResNet-101. The corresponding models are called respectively DETR and DETR-R101. Following [21], we also increase the feature resolution by adding a dilation to the last stage of the backbone and removing a stride from the ﬁrst convolution of this stage. The corresponding models are called respec- tively DETR-DC5 and DETR-DC5-R101 (dilated C5 stage). This modiﬁcation increases the resolution by a factor of two, thus improving performance for small objects, at the cost of a 16x higher cost in the self-attentions of the encoder, leading to an overall 2x increase in computational cost. A full comparison of FLOPs of these models and Faster R-CNN is given in Table 1.",
+                "text": "We use scale augmentation, resizing the input images such that the shortest side is at least 480 and at most 800 pixels while the longest at most 1333 [50]. To help learning global relationships through the self-attention of the encoder, we also apply random crop augmentations during training, improving the performance by approximately 1 AP. Speciﬁcally, a train image is cropped with probability 0.5 to a random rectangular patch which is then resized again to 800-1333. The transformer is trained with default dropout of 0.1. At inference End-to-End Object Detection with Transformers 9 Table 1: Comparison with Faster R-CNN with a ResNet-50 and ResNet-101 backbones on the COCO validation set. The top section shows results for Faster R-CNN models in Detectron2 [50], the middle section shows results for Faster R-CNN models with GIoU [38], random crops train-time augmentation, and the long 9x training schedule. DETR models achieve comparable results to heavily tuned Faster R-CNN baselines, having lower APS but greatly improved APL. We use torchscript Faster R-CNN and DETR models to measure FLOPS and FPS. Results without R101 in the name correspond to ResNet-50. Model GFLOPS/FPS #params AP AP50 AP75 APS APM APL Faster RCNN-DC5 320/16 166M 39.0 60.5 42.3 21.4 43.5 52.5 Faster RCNN-FPN 180/26 42M 40.2 61.0 43.8 24.2 43.5 52.0 Faster RCNN-R101-FPN 246/20 60M 42.0 62.5 45.9 25.2 45.6 54.6"
+            }
+        ]
+    },
+    {
+        "querry_id": "6",
+        "querry": "Quelle est la différence entre RAG-Sequence et RAG-Token ?",
+        "reference": "RAG-Sequence utilise le même document retrouvé pour générer toute la séquence. RAG-Token peut s'appuyer sur un document différent pour chaque token généré.",
+        "response": "RAG-Sequence utilise le même document récupéré pour prédire tous les tokens de la séquence cible. (2 Methods, p. 2–3) RAG-Token peut, lui, choisir un document latent différent pour chaque token et marginalise les prédictions sur les documents récupérés. (RAG-Token Model, p. 3)",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "2.1",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Token Model In the RAG-Token model we can draw a different latent document for each target token and marginalize accordingly. This allows the generator to choose content from several documents when producing an answer. Concretely, the top K documents are retrieved using the retriever, and then the generator produces a distribution for the next output token for each document, before marginalizing, and repeating the process with the following output token, Formally, we deﬁne:",
+                "text": "pRAG-Token(y|x) ≈ N Y i X z∈top-k(p(·|x)) pη(z|x)pθ(yi|x, z, y1:i−1) Finally, we note that RAG can be used for sequence classiﬁcation tasks by considering the target class as a target sequence of length one, in which case RAG-Sequence and RAG-Token are equivalent."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Token-BM25 29.7 41.5 32.1 33.1 17.5 22.3 55.5 48.4 75.1 91.6 RAG-Sequence-BM25 31.8 44.1 36.6 33.8 11.1 19.5 56.5 46.9",
+                "text": "RAG-Token-Frozen 37.8 50.1 37.1 51.1 16.7 21.7 55.9 49.4 72.9 89.4 RAG-Sequence-Frozen 41.2 52.1 41.8 52.6 11.8 19.6 56.7 47.3"
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "2 Methods",
+                "text": "We explore RAG models, which use the input sequence x to retrieve text documents z and use them as additional context when generating the target sequence y. As shown in Figure 1, our models leverage two components: (i) a retriever pη(z|x) with parameters η that returns (top-K truncated) distributions over text passages given a query x and (ii) a generator pθ(yi|x, z, y1:i−1) parametrized 1Code to run experiments with RAG has been open-sourced as part of the HuggingFace Transformers Library [66] and can be found at https://github.com/huggingface/transformers/blob/master/ examples/rag/. An interactive demo of RAG models can be found at https://huggingface.co/rag/ 2 by θ that generates a current token based on a context of the previous i −1 tokens y1:i−1, the original input x and a retrieved passage z. To train the retriever and generator end-to-end, we treat the retrieved document as a latent variable. We propose two models that marginalize over the latent documents in different ways to produce a distribution over generated text. In one approach, RAG-Sequence, the model uses the same document to predict each target token. The second approach, RAG-Token, can predict each target token based on a different document. In the following, we formally introduce both models and then describe the pη and pθ components, as well as the training and decoding procedure."
+            }
+        ]
+    },
+    {
+        "querry_id": "7",
+        "querry": "Quel retriever est utilisé dans RAG ?",
+        "reference": "DPR (Dense Passage Retriever) : une architecture bi-encodeur avec deux BERT-base, un pour les documents et un pour les requêtes. Les documents les plus pertinents sont trouvés par recherche du produit scalaire maximal (MIPS).",
+        "response": "RAG utilise un **retriever dense** pour retrouver les passages pertinents (Retrieval Ablations, p. 7).",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "2.2",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "Retrieval Ablations A key feature of RAG is learning to retrieve relevant information for the task. To assess the effectiveness of the retrieval mechanism, we run ablations where we freeze the retriever during training. As shown in Table 6, learned retrieval improves results for all tasks.",
+                "text": "We compare RAG’s dense retriever to a word overlap-based BM25 retriever [53]. Here, we replace RAG’s retriever with a ﬁxed BM25 system, and use BM25 retrieval scores as logits when calculating p(z|x). Table 6 shows the results. For FEVER, BM25 performs best, perhaps since FEVER claims are heavily entity-centric and thus well-suited for word overlap-based retrieval. Differentiable retrieval improves results on all other tasks, especially for Open-Domain QA, where it is crucial."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "2 Methods",
+                "text": "We explore RAG models, which use the input sequence x to retrieve text documents z and use them as additional context when generating the target sequence y. As shown in Figure 1, our models leverage two components: (i) a retriever pη(z|x) with parameters η that returns (top-K truncated) distributions over text passages given a query x and (ii) a generator pθ(yi|x, z, y1:i−1) parametrized 1Code to run experiments with RAG has been open-sourced as part of the HuggingFace Transformers Library [66] and can be found at https://github.com/huggingface/transformers/blob/master/ examples/rag/. An interactive demo of RAG models can be found at https://huggingface.co/rag/ 2 by θ that generates a current token based on a context of the previous i −1 tokens y1:i−1, the original input x and a retrieved passage z. To train the retriever and generator end-to-end, we treat the retrieved document as a latent variable. We propose two models that marginalize over the latent documents in different ways to produce a distribution over generated text. In one approach, RAG-Sequence, the model uses the same document to predict each target token. The second approach, RAG-Token, can predict each target token based on a different document. In the following, we formally introduce both models and then describe the pη and pθ components, as well as the training and decoding procedure."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Tok. 17.3 22.2 40.1 41.5 72.5 89.5 RAG-Seq. 14.7 21.4 40.8 44.2",
+                "text": "to more effective marginalization over documents. Furthermore, RAG can generate correct answers even when the correct answer is not in any retrieved document, achieving 11.8% accuracy in such cases for NQ, where an extractive model would score 0%."
+            }
+        ]
+    },
+    {
+        "querry_id": "8",
+        "querry": "Quel modèle sert de générateur dans RAG, et combien de paramètres a-t-il ?",
+        "reference": "BART-large, un modèle seq2seq pré-entraîné d'environ 400 millions de paramètres.",
+        "response": "Le générateur est \\(p_\\theta\\), paramétré par \\(\\theta\\). (section 2 Methods, p. 2–3) Le nombre de ses paramètres n’est pas indiqué dans les extraits.",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "2.3",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Token Model In the RAG-Token model we can draw a different latent document for each target token and marginalize accordingly. This allows the generator to choose content from several documents when producing an answer. Concretely, the top K documents are retrieved using the retriever, and then the generator produces a distribution for the next output token for each document, before marginalizing, and repeating the process with the following output token, Formally, we deﬁne:",
+                "text": "pRAG-Token(y|x) ≈ N Y i X z∈top-k(p(·|x)) pη(z|x)pθ(yi|x, z, y1:i−1) Finally, we note that RAG can be used for sequence classiﬁcation tasks by considering the target class as a target sequence of length one, in which case RAG-Sequence and RAG-Token are equivalent."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "5.4 Regularization",
+                "text": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and English-to-French newstest2014 tests at a fraction of the training cost. Model BLEU Training Cost (FLOPs) EN-DE EN-FR EN-DE EN-FR ByteNet [18] 23.75 Deep-Att + PosUnk [39] 39.2 1.0 · 1020 GNMT + RL [38] 24.6 39.92 2.3 · 1019 1.4 · 1020 ConvS2S [9] 25.16 40.46 9.6 · 1018 1.5 · 1020 MoE [32] 26.03 40.56 2.0 · 1019 1.2 · 1020 Deep-Att + PosUnk Ensemble [39] 40.4 8.0 · 1020 GNMT + RL Ensemble [38] 26.30 41.16 1.8 · 1020 1.1 · 1021"
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "2 Methods",
+                "text": "We explore RAG models, which use the input sequence x to retrieve text documents z and use them as additional context when generating the target sequence y. As shown in Figure 1, our models leverage two components: (i) a retriever pη(z|x) with parameters η that returns (top-K truncated) distributions over text passages given a query x and (ii) a generator pθ(yi|x, z, y1:i−1) parametrized 1Code to run experiments with RAG has been open-sourced as part of the HuggingFace Transformers Library [66] and can be found at https://github.com/huggingface/transformers/blob/master/ examples/rag/. An interactive demo of RAG models can be found at https://huggingface.co/rag/ 2 by θ that generates a current token based on a context of the previous i −1 tokens y1:i−1, the original input x and a retrieved passage z. To train the retriever and generator end-to-end, we treat the retrieved document as a latent variable. We propose two models that marginalize over the latent documents in different ways to produce a distribution over generated text. In one approach, RAG-Sequence, the model uses the same document to predict each target token. The second approach, RAG-Token, can predict each target token based on a different document. In the following, we formally introduce both models and then describe the pη and pθ components, as well as the training and decoding procedure."
+            }
+        ]
+    },
+    {
+        "querry_id": "9",
+        "querry": "Quelles parties du modèle RAG sont mises à jour pendant l'entraînement ?",
+        "reference": "Seulement l'encodeur de requêtes (BERT_q) et le générateur BART. L'encodeur de documents et l'index restent fixes, car les mettre à jour obligerait à réindexer régulièrement tous les documents, ce qui est coûteux.",
+        "response": "Je ne trouve pas cette information dans les extraits fournis.",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "2.4",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "Effect of Retrieving more documents Models are trained with either 5 or 10 retrieved latent documents, and we do not observe signiﬁcant differences in performance between them. We have the ﬂexibility to adjust the number of retrieved documents at test time, which can affect performance and runtime. Figure 3 (left) shows that retrieving more documents at test time monotonically improves Open-domain QA results for RAG-Sequence, but performance peaks for RAG-Token at 10 retrieved documents. Figure 3 (right) shows that retrieving more documents leads to higher Rouge-L for RAG-Token at the expense of Bleu-1, but the effect is less pronounced for RAG-Sequence.",
+                "text": "10 20 30 40 50 K Retrieved Docs 39 40 41 42 43 44 NQ Exact Match RAG-Tok RAG-Seq 10 20 30 40 50 K Retrieved Docs 40 50 60 70 80 NQ Answer Recall @ K RAG-Tok RAG-Seq Fixed DPR BM25 10 20 30 40 50 K Retrieved Docs 48 50 52 54 56 Bleu-1 / Rouge-L score RAG-Tok R-L RAG-Tok B-1 RAG-Seq R-L RAG-Seq B-1 Figure 3: Left: NQ performance as more documents are retrieved. Center: Retrieval recall performance in NQ. Right: MS-MARCO Bleu-1 and Rouge-L as more documents are retrieved."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "C Training setup Details",
+                "text": "We train all RAG models and BART baselines using Fairseq [45].2 We train with mixed precision ﬂoating point arithmetic [40], distributing training across 8, 32GB NVIDIA V100 GPUs, though training and inference can be run on one GPU. We ﬁnd that doing Maximum Inner Product Search with FAISS is sufﬁciently fast on CPU, so we store document index vectors on CPU, requiring ∼100 GB of CPU memory for all of Wikipedia. After submission, We have ported our code to HuggingFace Transformers [66]3, which achieves equivalent performance to the previous version but is a cleaner and easier to use implementation. This version is also open-sourced. We also compress the document index using FAISS’s compression tools, reducing the CPU memory requirement to 36GB. Scripts to run experiments with RAG can be found at https://github.com/huggingface/transformers/ blob/master/examples/rag/README.md and an interactive demo of a RAG model can be found at https://huggingface.co/rag/ 2https://github.com/pytorch/fairseq 3https://github.com/huggingface/transformers 17"
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "BART better 7.1% 16.8% RAG better 42.7% 37.4% Both good 11.7% 11.8% Both poor 17.7% 6.9% No majority 20.8% 20.1%",
+                "text": "Table 5: Ratio of distinct to total tri-grams for generation tasks. MSMARCO Jeopardy QGen Gold 89.6% 90.0% BART 70.7% 32.4% RAG-Token 77.8% 46.8% RAG-Seq. 83.5% 53.8% Table 6: Ablations on the dev set. As FEVER is a classiﬁcation task, both RAG models are equivalent. Model NQ TQA WQ CT Jeopardy-QGen MSMarco FVR-3 FVR-2 Exact Match B-1 QB-1 R-L B-1 Label Accuracy"
+            }
+        ]
+    },
+    {
+        "querry_id": "10",
+        "querry": "Comment se fait le décodage avec RAG-Sequence ?",
+        "reference": "Un beam search unique n'est pas possible. On fait un beam search pour chaque document, puis on combine les hypothèses : soit avec le Thorough Decoding (passes supplémentaires pour calculer les probabilités manquantes), soit avec le Fast Decoding (approximation qui évite ces passes).",
+        "response": "Avec RAG-Sequence, on récupère les *top K* documents, puis le générateur calcule la probabilité de la séquence complète pour chacun d’eux. (RAG-Sequence Model, p. 3) Ces probabilités sont pondérées par les probabilités du récupérateur et sommées afin de marginaliser le document latent; au décodage, on cherche à approximer l’argmax de \\(p(y\\mid x)\\). (RAG-Sequence Model, p. 3; 2.5 Decoding, p. 4)",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "2.5",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Token-BM25 29.7 41.5 32.1 33.1 17.5 22.3 55.5 48.4 75.1 91.6 RAG-Sequence-BM25 31.8 44.1 36.6 33.8 11.1 19.5 56.5 46.9",
+                "text": "RAG-Token-Frozen 37.8 50.1 37.1 51.1 16.7 21.7 55.9 49.4 72.9 89.4 RAG-Sequence-Frozen 41.2 52.1 41.8 52.6 11.8 19.6 56.7 47.3"
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "2.5 Decoding",
+                "text": "At test time, RAG-Sequence and RAG-Token require different ways to approximate arg maxy p(y|x)."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Sequence Model The RAG-Sequence model uses the same retrieved document to generate the complete sequence. Technically, it treats the retrieved document as a single latent variable that is marginalized to get the seq2seq probability p(y|x) via a top-K approximation. Concretely, the top K documents are retrieved using the retriever, and the generator produces the output sequence probability for each document, which are then marginalized,",
+                "text": "pRAG-Sequence(y|x) ≈ X z∈top-k(p(·|x)) pη(z|x)pθ(y|x, z) = X z∈top-k(p(·|x)) pη(z|x) N Y i pθ(yi|x, z, y1:i−1)"
+            }
+        ]
+    },
+    {
+        "querry_id": "11",
+        "querry": "Quelle source de connaissances utilise RAG, et comment est-elle découpée ?",
+        "reference": "Un dump de Wikipédia de décembre 2018. Chaque article est découpé en morceaux disjoints de 100 mots, soit environ 21 millions de documents.",
+        "response": "RAG utilise un dump de Wikipédia de décembre 2018 comme source de connaissances non paramétrique. Chaque article est découpé en segments disjoints de 100 mots, pour un total de 21 millions de documents. (Experiments, p. 4)",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "3",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "3 Experiments",
+                "text": "We experiment with RAG in a wide range of knowledge-intensive tasks. For all experiments, we use a single Wikipedia dump for our non-parametric knowledge source. Following Lee et al. [31] and Karpukhin et al. [26], we use the December 2018 dump. Each Wikipedia article is split into disjoint 100-word chunks, to make a total of 21M documents. We use the document encoder to compute an embedding for each document, and build a single MIPS index using FAISS [23] with a Hierarchical Navigable Small World approximation for fast retrieval [37]. During training, we retrieve the top k documents for each query. We consider k ∈{5, 10} for training and set k for test time using dev data. We now discuss experimental details for each task."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "RAG-Tok. 17.3 22.2 40.1 41.5 72.5 89.5 RAG-Seq. 14.7 21.4 40.8 44.2",
+                "text": "to more effective marginalization over documents. Furthermore, RAG can generate correct answers even when the correct answer is not in any retrieved document, achieving 11.8% accuracy in such cases for NQ, where an extractive model would score 0%."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "Broader Impact",
+                "text": "This work offers several positive societal beneﬁts over previous work: the fact that it is more strongly grounded in real factual knowledge (in this case Wikipedia) makes it “hallucinate” less with generations that are more factual, and offers more control and interpretability. RAG could be employed in a wide variety of scenarios with direct beneﬁt to society, for example by endowing it with a medical index and asking it open-domain questions on that topic, or by helping people be more effective at their jobs. With these advantages also come potential downsides: Wikipedia, or any potential external knowledge source, will probably never be entirely factual and completely devoid of bias. Since RAG can be employed as a language model, similar concerns as for GPT-2 [50] are valid here, although arguably to a lesser extent, including that it might be used to generate abuse, faked or misleading content in the news or on social media; to impersonate others; or to automate the production of spam/phishing content [54]. Advanced language models may also lead to the automation of various jobs in the coming decades [16]. In order to mitigate these risks, AI systems could be employed to ﬁght against misleading content and automated spam/phishing."
+            }
+        ]
+    },
+    {
+        "querry_id": "12",
+        "querry": "Pour quelle tâche un retriever BM25 fait-il mieux que le retriever appris de RAG ?",
+        "reference": "La vérification de faits (FEVER), probablement parce que ses affirmations sont très centrées sur des entités, ce qui favorise la recherche par mots-clés.",
+        "response": "Pour la tâche **FEVER**, le retriever BM25 fait mieux que le retriever appris de RAG. (Retrieval Ablations, p. 7)",
+        "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
+        "expected_section": "4.5",
+        "retrieved": [
+            {
+                "source": "RAG.pdf",
+                "section": "Retrieval Ablations A key feature of RAG is learning to retrieve relevant information for the task. To assess the effectiveness of the retrieval mechanism, we run ablations where we freeze the retriever during training. As shown in Table 6, learned retrieval improves results for all tasks.",
+                "text": "We compare RAG’s dense retriever to a word overlap-based BM25 retriever [53]. Here, we replace RAG’s retriever with a ﬁxed BM25 system, and use BM25 retrieval scores as logits when calculating p(z|x). Table 6 shows the results. For FEVER, BM25 performs best, perhaps since FEVER claims are heavily entity-centric and thus well-suited for word overlap-based retrieval. Differentiable retrieval improves results on all other tasks, especially for Open-Domain QA, where it is crucial."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "H Retrieval Collapse",
+                "text": "In preliminary experiments, we observed that for some tasks such as story generation [11], the retrieval component would “collapse” and learn to retrieve the same documents regardless of the input. In these cases, once retrieval had collapsed, the generator would learn to ignore the documents, and the RAG model would perform equivalently to BART. The collapse could be due to a less-explicit requirement for factual knowledge in some tasks, or the longer target sequences, which could result in less informative gradients for the retriever. Perez et al. [46] also found spurious retrieval results when optimizing a retrieval component in order to improve performance on downstream tasks."
+            },
+            {
+                "source": "RAG.pdf",
+                "section": "2.2 Retriever: DPR",
+                "text": "The retrieval component pη(z|x) is based on DPR [26]. DPR follows a bi-encoder architecture: pη(z|x) ∝exp \u0000"
+            }
+        ]
+    },
+    {
+        "querry_id": "13",
+        "querry": "Quels composants conçus à la main DETR supprime-t-il par rapport aux détecteurs classiques ?",
+        "reference": "La suppression des non-maxima (NMS) et la génération d'ancres (anchors). DETR traite la détection comme un problème de prédiction directe d'un ensemble d'objets.",
+        "response": "DETR supprime plusieurs composants conçus à la main qui encodent des connaissances a priori, notamment les ancres spatiales et la suppression des prédictions non maximales (NMS) (Introduction, p. 2).",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "1 Introduction",
+                "text": "We streamline the training pipeline by viewing object detection as a direct set prediction problem. We adopt an encoder-decoder architecture based on transformers [47], a popular architecture for sequence prediction. The self-attention mechanisms of transformers, which explicitly model all pairwise interactions between elements in a sequence, make these architectures particularly suitable for speciﬁc constraints of set prediction such as removing duplicate predictions. Our DEtection TRansformer (DETR, see Figure 1) predicts all objects at once, and is trained end-to-end with a set loss function which performs bipartite matching between predicted and ground-truth objects. DETR simpliﬁes the detection pipeline by dropping multiple hand-designed components that encode prior knowledge, like spatial anchors or non-maximal suppression. Unlike most existing detection methods, DETR doesn’t require any customized layers, and thus can be reproduced easily in any framework that contains standard CNN and transformer classes.1. Compared to most previous work on direct set prediction, the main features of DETR are the conjunction of the bipartite matching loss and transformers with (non-autoregressive) parallel decoding [29,12,10,8]. In contrast, previous work focused on autoregressive decoding with RNNs [43,41,30,36,42]. Our matching loss function uniquely assigns a prediction to a ground truth object, and is invariant to a permutation of predicted objects, so we can emit them in parallel."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            }
+        ]
+    },
+    {
+        "querry_id": "14",
+        "querry": "Comment DETR associe-t-il ses prédictions aux objets réels pendant l'entraînement ?",
+        "reference": "Par un appariement biparti : l'algorithme hongrois trouve l'association un-à-un optimale entre prédictions et objets réels, avec un coût qui tient compte de la classe prédite et de la similarité des boîtes.",
+        "response": "Pendant l’entraînement, DETR utilise une perte d’ensemble qui réalise un appariement biparti entre les prédictions et les objets annotés : chaque objet réel est associé de façon unique à une prédiction, indépendamment de l’ordre des prédictions. (Introduction, p. 2) Pour les expériences de segmentation panoptique, cet appariement hongrois est calculé à partir des distances entre les boîtes. (4.4 DETR for panoptic segmentation, p. 15)",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "3.1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "1 Introduction",
+                "text": "We streamline the training pipeline by viewing object detection as a direct set prediction problem. We adopt an encoder-decoder architecture based on transformers [47], a popular architecture for sequence prediction. The self-attention mechanisms of transformers, which explicitly model all pairwise interactions between elements in a sequence, make these architectures particularly suitable for speciﬁc constraints of set prediction such as removing duplicate predictions. Our DEtection TRansformer (DETR, see Figure 1) predicts all objects at once, and is trained end-to-end with a set loss function which performs bipartite matching between predicted and ground-truth objects. DETR simpliﬁes the detection pipeline by dropping multiple hand-designed components that encode prior knowledge, like spatial anchors or non-maximal suppression. Unlike most existing detection methods, DETR doesn’t require any customized layers, and thus can be reproduced easily in any framework that contains standard CNN and transformer classes.1. Compared to most previous work on direct set prediction, the main features of DETR are the conjunction of the bipartite matching loss and transformers with (non-autoregressive) parallel decoding [29,12,10,8]. In contrast, previous work focused on autoregressive decoding with RNNs [43,41,30,36,42]. Our matching loss function uniquely assigns a prediction to a ground truth object, and is invariant to a permutation of predicted objects, so we can emit them in parallel."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories. We train DETR to predict boxes around both stuﬀand things classes on COCO, using the same recipe. Predicting boxes is required for the training to be possible, since the Hungarian matching is computed using distances between boxes. We also add a mask head which predicts a binary mask for each of the predicted boxes, see Figure 8. It takes as input the output of transformer decoder for each object and computes multi-head (with M heads) attention scores of this embedding over the output of the encoder, generating M attention heatmaps per object in a small resolution. To make the ﬁnal prediction and increase the resolution, an FPN-like architecture is used. We describe the architecture in more details in the supplement. The ﬁnal resolution of the masks has stride 4 and each mask is supervised independently using the DICE/F-1 loss [28] and Focal loss [23]. The mask head can be trained either jointly, or in a two steps process, where we train DETR for boxes only, then freeze all the weights and train only the mask head for 25 epochs. Experimentally, these two approaches give similar results, we report results using the latter method since it results in a shorter total wall-clock time training. 16 Carion et al. Table 5: Comparison with the state-of-the-art methods UPSNet [51] and Panoptic FPN [18] on the COCO val dataset We retrained PanopticFPN with the same dataaugmentation as DETR, on a 18x schedule for fair comparison. UPSNet uses the 1x schedule, UPSNet-M is the version with multiscale test-time augmentations. Model Backbone PQ SQ RQ PQth SQth RQth PQst SQst RQst AP"
+            }
+        ]
+    },
+    {
+        "querry_id": "15",
+        "querry": "Quelle fonction de perte DETR utilise-t-il pour les boîtes englobantes ?",
+        "reference": "Une combinaison linéaire de la perte L1 et de la perte generalized IoU (GIoU). La GIoU est invariante à l'échelle, contrairement à la L1 seule.",
+        "response": "Les extraits ne précisent pas la fonction de perte utilisée pour les boîtes englobantes. Ils indiquent seulement que l’appariement hongrois repose sur des distances entre boîtes (section 4.4, p. 15-16).",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "3.1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories. We train DETR to predict boxes around both stuﬀand things classes on COCO, using the same recipe. Predicting boxes is required for the training to be possible, since the Hungarian matching is computed using distances between boxes. We also add a mask head which predicts a binary mask for each of the predicted boxes, see Figure 8. It takes as input the output of transformer decoder for each object and computes multi-head (with M heads) attention scores of this embedding over the output of the encoder, generating M attention heatmaps per object in a small resolution. To make the ﬁnal prediction and increase the resolution, an FPN-like architecture is used. We describe the architecture in more details in the supplement. The ﬁnal resolution of the masks has stride 4 and each mask is supervised independently using the DICE/F-1 loss [28] and Focal loss [23]. The mask head can be trained either jointly, or in a two steps process, where we train DETR for boxes only, then freeze all the weights and train only the mask head for 25 epochs. Experimentally, these two approaches give similar results, we report results using the latter method since it results in a shorter total wall-clock time training. 16 Carion et al. Table 5: Comparison with the state-of-the-art methods UPSNet [51] and Panoptic FPN [18] on the COCO val dataset We retrained PanopticFPN with the same dataaugmentation as DETR, on a 18x schedule for fair comparison. UPSNet uses the 1x schedule, UPSNet-M is the version with multiscale test-time augmentations. Model Backbone PQ SQ RQ PQth SQth RQth PQst SQst RQst AP"
+            }
+        ]
+    },
+    {
+        "querry_id": "16",
+        "querry": "Quels sont les principaux composants de l'architecture de DETR ?",
+        "reference": "Un backbone CNN (ResNet) qui extrait les caractéristiques de l'image, un Transformer encodeur-décodeur, et des réseaux feed-forward (FFN) qui prédisent la classe et la boîte de chaque objet.",
+        "response": "L’architecture de DETR comporte trois composants principaux : un backbone CNN qui extrait une représentation compacte des caractéristiques, un transformer encodeur-décodeur, et un réseau feed-forward (FFN) qui produit les prédictions finales de détection (section 3.2, p. 6).",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "3.2",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "A.3 Detailed architecture",
+                "text": "The detailed description of the transformer used in DETR, with positional encodings passed at every attention layer, is given in Fig. 10. Image features from the CNN backbone are passed through the transformer encoder, together with spatial positional encoding that are added to queries and keys at every multihead self-attention layer. Then, the decoder receives queries (initially set to zero), output positional encoding (object queries), and encoder memory, and produces the ﬁnal set of predicted class labels and bounding boxes through multiple multihead self-attention and decoder-encoder attention. The ﬁrst self-attention layer in the ﬁrst decoder layer can be skipped. Add & Norm FFN Add & Norm Multi-Head Self-Attention + + K Q V N× Image features Encoder Multi-Head Self-Attention Add & Norm Multi-Head Attention Add & Norm FFN Add & Norm + + K Q V + + K Q M× Decoder V Spatial positional encoding Object queries FFN FFN Class Bounding Box Fig. 10: Architecture of DETR’s transformer. Please, see Section A.3 for details."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "3 The DETR model",
+                "text": "Two ingredients are essential for direct set predictions in detection: (1) a set prediction loss that forces unique matching between predicted and ground truth End-to-End Object Detection with Transformers 5 boxes; (2) an architecture that predicts (in a single pass) a set of objects and models their relation. We describe our architecture in detail in Figure 2."
+            }
+        ]
+    },
+    {
+        "querry_id": "17",
+        "querry": "Que sont les object queries dans DETR, et comment le décodeur les traite-t-il ?",
+        "reference": "Ce sont N encodages positionnels appris, donnés en entrée du décodeur. Chacun produit une prédiction. Le décodeur les traite toutes en parallèle, et non de façon autorégressive.",
+        "response": "Les *object queries* sont un petit nombre fixe d’embeddings positionnels appris, fournis au décodeur. (Fig. 2, p. 7) Le décodeur les associe à des requêtes initialement nulles et à la mémoire produite par l’encodeur. (A.3 Detailed architecture, p. 22)\n\nIl traite ces entrées par plusieurs couches d’auto-attention et d’attention entre le décodeur et l’encodeur, puis chaque sortie sert à prédire une classe et une boîte englobante — ou la classe « aucun objet ». (A.3 Detailed architecture, p. 22 ; Fig. 2, p. 7)",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "3.2",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "A.3 Detailed architecture",
+                "text": "The detailed description of the transformer used in DETR, with positional encodings passed at every attention layer, is given in Fig. 10. Image features from the CNN backbone are passed through the transformer encoder, together with spatial positional encoding that are added to queries and keys at every multihead self-attention layer. Then, the decoder receives queries (initially set to zero), output positional encoding (object queries), and encoder memory, and produces the ﬁnal set of predicted class labels and bounding boxes through multiple multihead self-attention and decoder-encoder attention. The ﬁrst self-attention layer in the ﬁrst decoder layer can be skipped. Add & Norm FFN Add & Norm Multi-Head Self-Attention + + K Q V N× Image features Encoder Multi-Head Self-Attention Add & Norm Multi-Head Attention Add & Norm FFN Add & Norm + + K Q V + + K Q M× Decoder V Spatial positional encoding Object queries FFN FFN Class Bounding Box Fig. 10: Architecture of DETR’s transformer. Please, see Section A.3 for details."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Transformer encoder. First, a 1x1 convolution reduces the channel dimension of the high-level activation map f from C to a smaller dimension d. creating a new feature map z0 ∈Rd×H×W . The encoder expects a sequence as input, hence we collapse the spatial dimensions of z0 into one dimension, resulting in a d×HW feature map. Each encoder layer has a standard architecture and consists of a multi-head self-attention module and a feed forward network (FFN). Since the transformer architecture is permutation-invariant, we supplement it with ﬁxed positional encodings [31,3] that are added to the input of each attention layer. We defer to the supplementary material the detailed deﬁnition of the architecture, which follows the one described in [47].",
+                "text": "2 The input images are batched together, applying 0-padding adequately to ensure they all have the same dimensions (H0, W0) as the largest image of the batch. End-to-End Object Detection with Transformers 7 CNN set of image features transformer encoder … … positional encoding + transformer decoder class, box class, box no object no object FFN FFN FFN FFN object queries backbone encoder decoder prediction heads Fig. 2: DETR uses a conventional CNN backbone to learn a 2D representation of an input image. The model ﬂattens it and supplements it with a positional encoding before passing it into a transformer encoder. A transformer decoder then takes as input a small ﬁxed number of learned positional embeddings, which we call object queries, and additionally attends to the encoder output. We pass each output embedding of the decoder to a shared feed forward network (FFN) that predicts either a detection (class and bounding box) or a “no object” class."
+            }
+        ]
+    },
+    {
+        "querry_id": "18",
+        "querry": "Quel matériel a servi à entraîner DETR, et combien de temps a duré l'entraînement ?",
+        "reference": "16 GPU V100, avec 4 images par GPU (taille de batch totale de 64). L'entraînement du modèle de base sur 300 époques prend 3 jours.",
+        "response": "Je ne trouve pas ces informations dans les extraits fournis.",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "4",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories. We train DETR to predict boxes around both stuﬀand things classes on COCO, using the same recipe. Predicting boxes is required for the training to be possible, since the Hungarian matching is computed using distances between boxes. We also add a mask head which predicts a binary mask for each of the predicted boxes, see Figure 8. It takes as input the output of transformer decoder for each object and computes multi-head (with M heads) attention scores of this embedding over the output of the encoder, generating M attention heatmaps per object in a small resolution. To make the ﬁnal prediction and increase the resolution, an FPN-like architecture is used. We describe the architecture in more details in the supplement. The ﬁnal resolution of the masks has stride 4 and each mask is supervised independently using the DICE/F-1 loss [28] and Focal loss [23]. The mask head can be trained either jointly, or in a two steps process, where we train DETR for boxes only, then freeze all the weights and train only the mask head for 25 epochs. Experimentally, these two approaches give similar results, we report results using the latter method since it results in a shorter total wall-clock time training. 16 Carion et al. Table 5: Comparison with the state-of-the-art methods UPSNet [51] and Panoptic FPN [18] on the COCO val dataset We retrained PanopticFPN with the same dataaugmentation as DETR, on a 18x schedule for fair comparison. UPSNet uses the 1x schedule, UPSNet-M is the version with multiscale test-time augmentations. Model Backbone PQ SQ RQ PQth SQth RQth PQst SQst RQst AP"
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Importance of positional encodings. There are two kinds of positional en- codings in our model: spatial positional encodings and output positional encod-",
+                "text": "12 Carion et al. 1 2 3 4 5 6 34 36 38 40 42 decoder layer AP AP No NMS AP NMS=0.7 1 2 3 4 5 6 54 56 58 60 62 decoder layer AP50 AP No NMS AP NMS=0.7 AP50 No NMS AP50 NMS=0.7 Fig. 4: AP and AP50 performance after each decoder layer. A single long schedule baseline model is evaluated. DETR does not need NMS by design, which is validated by this ﬁgure. NMS lowers AP in the ﬁnal layers, removing TP predictions, but improves AP in the ﬁrst decoder layers, removing double predictions, as there is no communication in the ﬁrst layer, and slightly improves AP50. Fig. 5: Out of distribution generalization for rare classes. Even though no image in the training set has more than 13 giraﬀes, DETR has no diﬃculty generalizing to 24 and more instances of the same class."
+            }
+        ]
+    },
+    {
+        "querry_id": "19",
+        "querry": "Comment DETR se compare-t-il à Faster R-CNN sur COCO ?",
+        "reference": "Les performances globales sont comparables. DETR est nettement meilleur sur les grands objets, mais moins bon sur les petits.",
+        "response": "Sur le sous-ensemble de validation COCO, DETR obtient **42 AP** et se montre compétitif avec Faster R-CNN à nombre de paramètres égal (41,3 millions). (4.1, p. 10) Son avantage vient surtout des grands objets, avec **+7,8 AP** pour cette catégorie, tandis qu’il reste en retrait sur les petits objets, avec **−5,5 AP**. (4.1, p. 10) DETR-DC5 obtient un AP supérieur, mais demeure lui aussi nettement derrière sur les petits objets ; avec un backbone ResNet-101, Faster R-CNN et DETR affichent des résultats comparables. (4.1, p. 10)",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "4.1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "4.1 Comparison with Faster R-CNN",
+                "text": "with the 9x schedule (109 epochs) and the described enhancements, which in total adds 1-2 AP. In the last section of Table 1 we show the results for multiple DETR models. To be comparable in the number of parameters we choose a model with 6 transformer and 6 decoder layers of width 256 with 8 attention heads. Like Faster R-CNN with FPN this model has 41.3M parameters, out of which 23.5M are in ResNet-50, and 17.8M are in the transformer. Even though both Faster R-CNN and DETR are still likely to further improve with longer training, we can conclude that DETR can be competitive with Faster R-CNN with the same number of parameters, achieving 42 AP on the COCO val subset. The way DETR achieves this is by improving APL (+7.8), however note that the model is still lagging behind in APS (-5.5). DETR-DC5 with the same number of parameters and similar FLOP count has higher AP, but is still signiﬁcantly behind in APS too. Faster R-CNN and DETR with ResNet-101 backbone show comparable results as well."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.1 Comparison with Faster R-CNN",
+                "text": "Transformers are typically trained with Adam or Adagrad optimizers with very long training schedules and dropout, and this is true for DETR as well. Faster R-CNN, however, is trained with SGD with minimal data augmentation and we are not aware of successful applications of Adam or dropout. Despite these diﬀerences we attempt to make a Faster R-CNN baseline stronger. To align it with DETR, we add generalized IoU [38] to the box loss, the same random crop augmentation and long training known to improve results [13]. Results are presented in Table 1. In the top section we show Faster R-CNN results from Detectron2 Model Zoo [50] for models trained with the 3x schedule. In the middle section we show results (with a “+”) for the same models but trained 10 Carion et al. Table 2: Eﬀect of encoder size. Each row corresponds to a model with varied number of encoder layers and ﬁxed number of decoder layers. Performance gradually improves with more encoder layers. #layers GFLOPS/FPS #params AP AP50 APS APM APL 0 76/28 33.4M 36.7 57.4 16.8 39.6 54.2 3 81/25 37.4M 40.1 60.6 18.5 43.8 58.6 6 86/23 41.3M 40.6 61.6 19.9 44.3 60.2 12 95/20 49.2M 41.6 62.1 19.8 44.9 61.9"
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4 Experiments",
+                "text": "We show that DETR achieves competitive results compared to Faster R-CNN in quantitative evaluation on COCO. Then, we provide a detailed ablation study of the architecture and loss, with insights and qualitative results. Finally, to show that DETR is a versatile and extensible model, we present results on panoptic segmentation, training only a small extension on a ﬁxed DETR model. We provide code and pretrained models to reproduce our experiments at https://github.com/facebookresearch/detr."
+            }
+        ]
+    },
+    {
+        "querry_id": "20",
+        "querry": "Sur quel jeu de données DETR est-il évalué ?",
+        "reference": "COCO 2017 (détection et segmentation panoptique), avec environ 118 000 images d'entraînement et 5 000 images de validation.",
+        "response": "DETR est évalué sur le jeu de données COCO. (4 Experiments, p. 8)",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "4",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories. We train DETR to predict boxes around both stuﬀand things classes on COCO, using the same recipe. Predicting boxes is required for the training to be possible, since the Hungarian matching is computed using distances between boxes. We also add a mask head which predicts a binary mask for each of the predicted boxes, see Figure 8. It takes as input the output of transformer decoder for each object and computes multi-head (with M heads) attention scores of this embedding over the output of the encoder, generating M attention heatmaps per object in a small resolution. To make the ﬁnal prediction and increase the resolution, an FPN-like architecture is used. We describe the architecture in more details in the supplement. The ﬁnal resolution of the masks has stride 4 and each mask is supervised independently using the DICE/F-1 loss [28] and Focal loss [23]. The mask head can be trained either jointly, or in a two steps process, where we train DETR for boxes only, then freeze all the weights and train only the mask head for 25 epochs. Experimentally, these two approaches give similar results, we report results using the latter method since it results in a shorter total wall-clock time training. 16 Carion et al. Table 5: Comparison with the state-of-the-art methods UPSNet [51] and Panoptic FPN [18] on the COCO val dataset We retrained PanopticFPN with the same dataaugmentation as DETR, on a 18x schedule for fair comparison. UPSNet uses the 1x schedule, UPSNet-M is the version with multiscale test-time augmentations. Model Backbone PQ SQ RQ PQth SQth RQth PQst SQst RQst AP"
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4 Experiments",
+                "text": "We show that DETR achieves competitive results compared to Faster R-CNN in quantitative evaluation on COCO. Then, we provide a detailed ablation study of the architecture and loss, with insights and qualitative results. Finally, to show that DETR is a versatile and extensible model, we present results on panoptic segmentation, training only a small extension on a ﬁxed DETR model. We provide code and pretrained models to reproduce our experiments at https://github.com/facebookresearch/detr."
+            }
+        ]
+    },
+    {
+        "querry_id": "21",
+        "querry": "À quoi servent les pertes auxiliaires dans le décodeur de DETR ?",
+        "reference": "On ajoute des FFN de prédiction et la perte hongroise après chaque couche du décodeur. Cela aide le modèle à prédire le bon nombre d'objets de chaque classe.",
+        "response": "Je ne trouve pas cette information dans les extraits fournis.",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "3.2",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories. We train DETR to predict boxes around both stuﬀand things classes on COCO, using the same recipe. Predicting boxes is required for the training to be possible, since the Hungarian matching is computed using distances between boxes. We also add a mask head which predicts a binary mask for each of the predicted boxes, see Figure 8. It takes as input the output of transformer decoder for each object and computes multi-head (with M heads) attention scores of this embedding over the output of the encoder, generating M attention heatmaps per object in a small resolution. To make the ﬁnal prediction and increase the resolution, an FPN-like architecture is used. We describe the architecture in more details in the supplement. The ﬁnal resolution of the masks has stride 4 and each mask is supervised independently using the DICE/F-1 loss [28] and Focal loss [23]. The mask head can be trained either jointly, or in a two steps process, where we train DETR for boxes only, then freeze all the weights and train only the mask head for 25 epochs. Experimentally, these two approaches give similar results, we report results using the latter method since it results in a shorter total wall-clock time training. 16 Carion et al. Table 5: Comparison with the state-of-the-art methods UPSNet [51] and Panoptic FPN [18] on the COCO val dataset We retrained PanopticFPN with the same dataaugmentation as DETR, on a 18x schedule for fair comparison. UPSNet uses the 1x schedule, UPSNet-M is the version with multiscale test-time augmentations. Model Backbone PQ SQ RQ PQth SQth RQth PQst SQst RQst AP"
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "Panoptic segmentation [19] has recently attracted a lot of attention from the computer vision community. Similarly to the extension of Faster R-CNN [37] to Mask R-CNN [14], DETR can be naturally extended by adding a mask head on top of the decoder outputs. In this section we demonstrate that such a head can be used to produce panoptic segmentation [19] by treating stuﬀand thing classes 3 Base picture credit: https://www.piqsels.com/en/public-domain-photo-jzlwu End-to-End Object Detection with Transformers 15 Multi head attention Input image (3 x H x W) Box embeddings (d x N) Encoded image (d x H/32 x W/32) Attention maps (N x M x H/32 x W/32) Masks logits (N x H/4 x W/4) Pixel-wise argmax Concatenate 2 x (Conv 3x3 + GN + ReLU) 2x up + add Conv 3x3 + GN + ReLU 2x up + add Conv 3x3 + GN + ReLU 2x up + add Conv 3x3 + GN + ReLU + Conv 3x3 FPN-style CNN Resnet features Res5 Res4 Res3 Res2 Fig. 8: Illustration of the panoptic head. A binary mask is generated in parallel for each detected object, then the masks are merged using pixel-wise argmax. Fig. 9: Qualitative results for panoptic segmentation generated by DETR-R101. DETR produces aligned mask predictions in a uniﬁed manner for things and stuﬀ. in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories."
+            }
+        ]
+    },
+    {
+        "querry_id": "22",
+        "querry": "DETR peut-il faire autre chose que de la détection d'objets ?",
+        "reference": "Oui : en ajoutant une tête de prédiction de masques sur les sorties du décodeur, DETR fait de la segmentation panoptique.",
+        "response": "Oui. DETR peut aussi réaliser de la **segmentation panoptique** : on lui ajoute une tête de masques qui prédit un masque binaire pour chaque objet, et les masques sont réunis au niveau des pixels. (section 4.4, p. 14-15) Cette approche traite de manière unifiée les classes *things* et *stuff*. (section 4.4, p. 14-16)",
+        "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
+        "expected_section": "4.4",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "Panoptic segmentation [19] has recently attracted a lot of attention from the computer vision community. Similarly to the extension of Faster R-CNN [37] to Mask R-CNN [14], DETR can be naturally extended by adding a mask head on top of the decoder outputs. In this section we demonstrate that such a head can be used to produce panoptic segmentation [19] by treating stuﬀand thing classes 3 Base picture credit: https://www.piqsels.com/en/public-domain-photo-jzlwu End-to-End Object Detection with Transformers 15 Multi head attention Input image (3 x H x W) Box embeddings (d x N) Encoded image (d x H/32 x W/32) Attention maps (N x M x H/32 x W/32) Masks logits (N x H/4 x W/4) Pixel-wise argmax Concatenate 2 x (Conv 3x3 + GN + ReLU) 2x up + add Conv 3x3 + GN + ReLU 2x up + add Conv 3x3 + GN + ReLU 2x up + add Conv 3x3 + GN + ReLU + Conv 3x3 FPN-style CNN Resnet features Res5 Res4 Res3 Res2 Fig. 8: Illustration of the panoptic head. A binary mask is generated in parallel for each detected object, then the masks are merged using pixel-wise argmax. Fig. 9: Qualitative results for panoptic segmentation generated by DETR-R101. DETR produces aligned mask predictions in a uniﬁed manner for things and stuﬀ. in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "3.2 DETR architecture",
+                "text": "The overall DETR architecture is surprisingly simple and depicted in Figure 2. It contains three main components, which we describe below: a CNN backbone to extract a compact feature representation, an encoder-decoder transformer, and a simple feed forward network (FFN) that makes the ﬁnal detection prediction. Unlike many modern detectors, DETR can be implemented in any deep learning framework that provides a common CNN backbone and a transformer architecture implementation with just a few hundred lines. Inference code for DETR can be implemented in less than 50 lines in PyTorch [32]. We hope that the simplicity of our method will attract new researchers to the detection community."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "4.4 DETR for panoptic segmentation",
+                "text": "in a uniﬁed way. We perform our experiments on the panoptic annotations of the COCO dataset that has 53 stuﬀcategories in addition to 80 things categories. We train DETR to predict boxes around both stuﬀand things classes on COCO, using the same recipe. Predicting boxes is required for the training to be possible, since the Hungarian matching is computed using distances between boxes. We also add a mask head which predicts a binary mask for each of the predicted boxes, see Figure 8. It takes as input the output of transformer decoder for each object and computes multi-head (with M heads) attention scores of this embedding over the output of the encoder, generating M attention heatmaps per object in a small resolution. To make the ﬁnal prediction and increase the resolution, an FPN-like architecture is used. We describe the architecture in more details in the supplement. The ﬁnal resolution of the masks has stride 4 and each mask is supervised independently using the DICE/F-1 loss [28] and Focal loss [23]. The mask head can be trained either jointly, or in a two steps process, where we train DETR for boxes only, then freeze all the weights and train only the mask head for 25 epochs. Experimentally, these two approaches give similar results, we report results using the latter method since it results in a shorter total wall-clock time training. 16 Carion et al. Table 5: Comparison with the state-of-the-art methods UPSNet [51] and Panoptic FPN [18] on the COCO val dataset We retrained PanopticFPN with the same dataaugmentation as DETR, on a 18x schedule for fair comparison. UPSNet uses the 1x schedule, UPSNet-M is the version with multiscale test-time augmentations. Model Backbone PQ SQ RQ PQth SQth RQth PQst SQst RQst AP"
+            }
+        ]
+    },
+    {
+        "querry_id": "23",
+        "querry": "Combien de têtes d'attention utilise le Transformer de base, et quelle est la dimension de chaque tête ?",
+        "reference": "8 têtes (h = 8), avec d_k = d_v = d_model / h = 64.",
+        "response": "Les extraits ne précisent ni le nombre de têtes d’attention du Transformer de base ni la dimension de chaque tête (A.1, p. 20 ; « Single head », p. 20-21).",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "3.2.2",
+        "retrieved": [
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "5.4 Regularization",
+                "text": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and English-to-French newstest2014 tests at a fraction of the training cost. Model BLEU Training Cost (FLOPs) EN-DE EN-FR EN-DE EN-FR ByteNet [18] 23.75 Deep-Att + PosUnk [39] 39.2 1.0 · 1020 GNMT + RL [38] 24.6 39.92 2.3 · 1019 1.4 · 1020 ConvS2S [9] 25.16 40.46 9.6 · 1018 1.5 · 1020 MoE [32] 26.03 40.56 2.0 · 1019 1.2 · 1020 Deep-Att + PosUnk Ensemble [39] 40.4 8.0 · 1020 GNMT + RL Ensemble [38] 26.30 41.16 1.8 · 1020 1.1 · 1021"
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "A.1 Preliminaries: Multi-head attention layers",
+                "text": "Since our model is based on the Transformer architecture, we remind here the general form of attention mechanisms we use for exhaustivity. The attention mechanism follows [47], except for the details of positional encodings (see Equation 8) that follows [7]."
+            }
+        ]
+    },
+    {
+        "querry_id": "24",
+        "querry": "Comment le Transformer encode-t-il la position des mots dans la séquence ?",
+        "reference": "Avec des encodages positionnels basés sur des fonctions sinus et cosinus de fréquences différentes, ajoutés aux embeddings d'entrée.",
+        "response": "Le Transformer encode la position au moyen d’encodages positionnels, ajoutés aux représentations utilisées pour les requêtes et les clés avant le calcul de l’attention. Ces encodages peuvent être appris ou fixes et sont partagés entre les couches d’attention pour une même séquence (section « Single head », p. 20-21).",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "3.5",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "3.3 Position-wise Feed-Forward Networks",
+                "text": "In addition to attention sub-layers, each of the layers in our encoder and decoder contains a fully connected feed-forward network, which is applied to each position separately and identically. This consists of two linear transformations with a ReLU activation in between. FFN(x) = max(0, xW1 + b1)W2 + b2 (2) While the linear transformations are the same across different positions, they use different parameters from layer to layer. Another way of describing this is as two convolutions with kernel size 1. The dimensionality of input and output is dmodel = 512, and the inner-layer has dimensionality dff = 2048."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "3.2.3 Applications of Attention in our Model",
+                "text": "The Transformer uses multi-head attention in three different ways: • In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys and values come from the output of the encoder. This allows every position in the decoder to attend over all positions in the input sequence. This mimics the typical encoder-decoder attention mechanisms in sequence-to-sequence models such as [38, 2, 9]. • The encoder contains self-attention layers. In a self-attention layer all of the keys, values and queries come from the same place, in this case, the output of the previous layer in the encoder. Each position in the encoder can attend to all positions in the previous layer of the encoder. • Similarly, self-attention layers in the decoder allow each position in the decoder to attend to all positions in the decoder up to and including that position. We need to prevent leftward information flow in the decoder to preserve the auto-regressive property. We implement this inside of scaled dot-product attention by masking out (setting to −∞) all values in the input of the softmax which correspond to illegal connections. See Figure 2."
+            }
+        ]
+    },
+    {
+        "querry_id": "25",
+        "querry": "Pourquoi utiliser l'auto-attention plutôt que des couches récurrentes ou convolutives ?",
+        "reference": "Pour trois raisons : le coût de calcul par couche, la part du calcul parallélisable (l'auto-attention relie toutes les positions avec un nombre constant d'opérations séquentielles) et la longueur du chemin entre deux positions éloignées, qui est constante, ce qui facilite l'apprentissage des dépendances à longue distance.",
+        "response": "L’auto-attention est privilégiée pour trois raisons : elle permet de comparer la complexité de calcul par couche, le degré de parallélisation et la longueur des chemins entre positions éloignées, cette dernière étant importante pour apprendre les dépendances à longue portée. (section 4 « Why Self-Attention », p. 6-7)\n\nContrairement aux couches récurrentes, qui nécessitent \\(O(n)\\) opérations séquentielles, une couche d’auto-attention relie toutes les positions avec un nombre constant d’opérations séquentielles. Elle est aussi plus rapide que les couches récurrentes lorsque la longueur de séquence \\(n\\) est inférieure à la dimension de représentation \\(d\\), situation décrite comme fréquente pour les représentations de phrases. (section 4 « Why Self-Attention », p. 6-7)\n\nLes extraits ne donnent pas de comparaison plus précise entre l’auto-attention et les couches convolutives. (section 4 « Why Self-Attention », p. 6-7)",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "4",
+        "retrieved": [
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "3.2.3 Applications of Attention in our Model",
+                "text": "The Transformer uses multi-head attention in three different ways: • In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer, and the memory keys and values come from the output of the encoder. This allows every position in the decoder to attend over all positions in the input sequence. This mimics the typical encoder-decoder attention mechanisms in sequence-to-sequence models such as [38, 2, 9]. • The encoder contains self-attention layers. In a self-attention layer all of the keys, values and queries come from the same place, in this case, the output of the previous layer in the encoder. Each position in the encoder can attend to all positions in the previous layer of the encoder. • Similarly, self-attention layers in the decoder allow each position in the decoder to attend to all positions in the decoder up to and including that position. We need to prevent leftward information flow in the decoder to preserve the auto-regressive property. We implement this inside of scaled dot-product attention by masking out (setting to −∞) all values in the input of the softmax which correspond to illegal connections. See Figure 2."
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Multi-head The general form of multi-head attention with M heads of dimen- sion d is a function with the following signature (using d′ = d M , and giving matrix/tensors sizes in underbrace)",
+                "text": "mh-attn : Xq |{z} d×Nq , Xkv |{z} d×Nkv , T |{z} M×3×d′×d , L |{z} d×d 7→ ˜Xq |{z} d×Nq (3) where Xq is the query sequence of length Nq, Xkv is the key-value sequence of length Nkv (with the same number of channels d for simplicity of exposition), T is the weight tensor to compute the so-called query, key and value embeddings, and L is a projection matrix. The output is the same size as the query sequence. To ﬁx the vocabulary before giving details, multi-head self-attention (mh-s-attn) is the special case Xq = Xkv, i.e. mh-s-attn(X, T, L) = mh-attn(X, X, T, L) . (4) The multi-head attention is simply the concatenation of M single attention heads followed by a projection with L. The common practice [47] is to use residual connections, dropout and layer normalization. In other words, denoting ˜Xq = mh-attn(Xq, Xkv, T, L) and ¯¯X(q) the concatenation of attention heads, we have X′ q = [attn(Xq, Xkv, T1); ...; attn(Xq, Xkv, TM)] (5) ˜Xq = layernorm \u0000 Xq + dropout(LX′ q) \u0001 , (6) where [;] denotes concatenation on the channel axis."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "4 Why Self-Attention",
+                "text": "In this section we compare various aspects of self-attention layers to the recurrent and convolutional layers commonly used for mapping one variable-length sequence of symbol representations (x1, ..., xn) to another sequence of equal length (z1, ..., zn), with xi, zi ∈Rd, such as a hidden layer in a typical sequence transduction encoder or decoder. Motivating our use of self-attention we consider three desiderata. One is the total computational complexity per layer. Another is the amount of computation that can be parallelized, as measured by the minimum number of sequential operations required. The third is the path length between long-range dependencies in the network. Learning long-range dependencies is a key challenge in many sequence transduction tasks. One key factor affecting the ability to learn such dependencies is the length of the paths forward and backward signals have to traverse in the network. The shorter these paths between any combination of positions in the input and output sequences, the easier it is to learn long-range dependencies [12]. Hence we also compare the maximum path length between any two input and output positions in networks composed of the different layer types. As noted in Table 1, a self-attention layer connects all positions with a constant number of sequentially executed operations, whereas a recurrent layer requires O(n) sequential operations. In terms of computational complexity, self-attention layers are faster than recurrent layers when the sequence 6 length n is smaller than the representation dimensionality d, which is most often the case with sentence representations used by state-of-the-art models in machine translations, such as word-piece [38] and byte-pair [31] representations. To improve computational performance for tasks involving very long sequences, self-attention could be restricted to considering only a neighborhood of size r in the input sequence centered around the respective output position. This would increase the maximum path length to O(n/r). We plan to investigate this approach further in future work."
+            }
+        ]
+    },
+    {
+        "querry_id": "26",
+        "querry": "Sur quelles données le Transformer a-t-il été entraîné pour la traduction anglais-allemand ?",
+        "reference": "Le jeu WMT 2014 anglais-allemand, environ 4,5 millions de paires de phrases, encodées en byte-pair encoding avec un vocabulaire partagé d'environ 37 000 tokens.",
+        "response": "Les extraits indiquent que le Transformer a été évalué sur la tâche de traduction WMT 2014 anglais-allemand, mais ne précisent pas quelles données d’entraînement ont été utilisées (section 6.1, p. 8).",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "5.1",
+        "retrieved": [
+            {
+                "source": "DETR.pdf",
+                "section": "Single head An attention head with weight tensor T ′ ∈R3×d′×d, denoted by attn(Xq, Xkv, T ′), depends on additional positional encoding Pq ∈Rd×Nq and Pkv ∈Rd×Nkv. It starts by computing so-called query, key and value embeddings after adding the query and key positional encodings [7]:",
+                "text": "[Q; K; V ] = [T ′ 1(Xq + Pq); T ′ 2(Xkv + Pkv); T ′ 3Xkv] (7) where T ′ is the concatenation of T ′ 1, T ′ 2, T ′ 3. The attention weights α are then computed based on the softmax of dot products between queries and keys, so that each element of the query sequence attends to all elements of the key-value sequence (i is a query index and j a key-value index): αi,j = e 1 √ d′ QT i Kj Zi where Zi = Nkv X j=1 e 1 √ d′ QT i Kj . (8) End-to-End Object Detection with Transformers 21 In our case, the positional encodings may be learnt or ﬁxed, but are shared across all attention layers for a given query/key-value sequence, so we do not explicitly write them as parameters of the attention. We give more details on their exact value when describing the encoder and the decoder. The ﬁnal output is the aggregation of values weighted by attention weights: The i-th row is given by attni(Xq, Xkv, T ′) = PNkv j=1 αi,jVj."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "6.1 Machine Translation",
+                "text": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) by more than 2.0 BLEU, establishing a new state-of-the-art BLEU score of 28.4. The configuration of this model is listed in the bottom line of Table 3. Training took 3.5 days on 8 P100 GPUs. Even our base model surpasses all previously published models and ensembles, at a fraction of the training cost of any of the competitive models. On the WMT 2014 English-to-French translation task, our big model achieves a BLEU score of 41.0, outperforming all of the previously published single models, at less than 1/4 the training cost of the previous state-of-the-art model. The Transformer (big) model trained for English-to-French used dropout rate Pdrop = 0.1, instead of 0.3. For the base models, we used a single model obtained by averaging the last 5 checkpoints, which were written at 10-minute intervals. For the big models, we averaged the last 20 checkpoints. We used beam search with a beam size of 4 and length penalty α = 0.6 [38]. These hyperparameters were chosen after experimentation on the development set. We set the maximum output length during inference to input length + 50, but terminate early when possible [38]. Table 2 summarizes our results and compares our translation quality and training costs to other model architectures from the literature. We estimate the number of floating point operations used to train a model by multiplying the training time, the number of GPUs used, and an estimate of the sustained single-precision floating-point capacity of each GPU 5."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "7 Conclusion",
+                "text": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder architectures with multi-headed self-attention. For translation tasks, the Transformer can be trained significantly faster than architectures based on recurrent or convolutional layers. On both WMT 2014 English-to-German and WMT 2014 English-to-French translation tasks, we achieve a new state of the art. In the former task our best model outperforms even all previously reported ensembles. We are excited about the future of attention-based models and plan to apply them to other tasks. We plan to extend the Transformer to problems involving input and output modalities other than text and to investigate local, restricted attention mechanisms to efficiently handle large inputs and outputs such as images, audio and video. Making generation less sequential is another research goals of ours. The code we used to train and evaluate our models is available at https://github.com/ tensorflow/tensor2tensor."
+            }
+        ]
+    },
+    {
+        "querry_id": "27",
+        "querry": "Quelles techniques de régularisation sont utilisées pendant l'entraînement du Transformer ?",
+        "reference": "Le dropout résiduel (P_drop = 0,1 pour le modèle de base) et le label smoothing (ε_ls = 0,1).",
+        "response": "L’extrait indique que trois types de régularisation sont utilisés, mais ne précise pas lesquels. (section 5.4, p. 7-8)",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "5.4",
+        "retrieved": [
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "5.4 Regularization",
+                "text": "We employ three types of regularization during training: 7 Table 2: The Transformer achieves better BLEU scores than previous state-of-the-art models on the English-to-German and English-to-French newstest2014 tests at a fraction of the training cost. Model BLEU Training Cost (FLOPs) EN-DE EN-FR EN-DE EN-FR ByteNet [18] 23.75 Deep-Att + PosUnk [39] 39.2 1.0 · 1020 GNMT + RL [38] 24.6 39.92 2.3 · 1019 1.4 · 1020 ConvS2S [9] 25.16 40.46 9.6 · 1018 1.5 · 1020 MoE [32] 26.03 40.56 2.0 · 1019 1.2 · 1020 Deep-Att + PosUnk Ensemble [39] 40.4 8.0 · 1020 GNMT + RL Ensemble [38] 26.30 41.16 1.8 · 1020 1.1 · 1021"
+            },
+            {
+                "source": "DETR.pdf",
+                "section": "Transformer encoder. First, a 1x1 convolution reduces the channel dimension of the high-level activation map f from C to a smaller dimension d. creating a new feature map z0 ∈Rd×H×W . The encoder expects a sequence as input, hence we collapse the spatial dimensions of z0 into one dimension, resulting in a d×HW feature map. Each encoder layer has a standard architecture and consists of a multi-head self-attention module and a feed forward network (FFN). Since the transformer architecture is permutation-invariant, we supplement it with ﬁxed positional encodings [31,3] that are added to the input of each attention layer. We defer to the supplementary material the detailed deﬁnition of the architecture, which follows the one described in [47].",
+                "text": "2 The input images are batched together, applying 0-padding adequately to ensure they all have the same dimensions (H0, W0) as the largest image of the batch. End-to-End Object Detection with Transformers 7 CNN set of image features transformer encoder … … positional encoding + transformer decoder class, box class, box no object no object FFN FFN FFN FFN object queries backbone encoder decoder prediction heads Fig. 2: DETR uses a conventional CNN backbone to learn a 2D representation of an input image. The model ﬂattens it and supplements it with a positional encoding before passing it into a transformer encoder. A transformer decoder then takes as input a small ﬁxed number of learned positional embeddings, which we call object queries, and additionally attends to the encoder output. We pass each output embedding of the decoder to a shared feed forward network (FFN) that predicts either a detection (class and bounding box) or a “no object” class."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "Most competitive neural sequence transduction models have an encoder-decoder structure [5, 2, 35]. Here, the encoder maps an input sequence of symbol representations (x1, ..., xn) to a sequence of continuous representations z = (z1, ..., zn). Given z, the decoder then generates an output sequence (y1, ..., ym) of symbols one element at a time. At each step the model is auto-regressive [10], consuming the previously generated symbols as additional input when generating the next.",
+                "text": "2 Figure 1: The Transformer - model architecture. The Transformer follows this overall architecture using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder, shown in the left and right halves of Figure 1, respectively."
+            }
+        ]
+    },
+    {
+        "querry_id": "28",
+        "querry": "Quel score BLEU le grand Transformer obtient-il sur WMT 2014 anglais-allemand ?",
+        "reference": "28,4 BLEU, soit plus de 2 points de mieux que les meilleurs modèles précédents, ensembles compris.",
+        "response": "Le grand Transformer obtient un score de **28,4 BLEU** sur WMT 2014 anglais-allemand (6.1, p. 8).",
+        "expected_doc": "Attention is all you need, Vaswani et al., 2017",
+        "expected_section": "6.1",
+        "retrieved": [
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "6.1 Machine Translation",
+                "text": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big) in Table 2) outperforms the best previously reported models (including ensembles) by more than 2.0 BLEU, establishing a new state-of-the-art BLEU score of 28.4. The configuration of this model is listed in the bottom line of Table 3. Training took 3.5 days on 8 P100 GPUs. Even our base model surpasses all previously published models and ensembles, at a fraction of the training cost of any of the competitive models. On the WMT 2014 English-to-French translation task, our big model achieves a BLEU score of 41.0, outperforming all of the previously published single models, at less than 1/4 the training cost of the previous state-of-the-art model. The Transformer (big) model trained for English-to-French used dropout rate Pdrop = 0.1, instead of 0.3. For the base models, we used a single model obtained by averaging the last 5 checkpoints, which were written at 10-minute intervals. For the big models, we averaged the last 20 checkpoints. We used beam search with a beam size of 4 and length penalty α = 0.6 [38]. These hyperparameters were chosen after experimentation on the development set. We set the maximum output length during inference to input length + 50, but terminate early when possible [38]. Table 2 summarizes our results and compares our translation quality and training costs to other model architectures from the literature. We estimate the number of floating point operations used to train a model by multiplying the training time, the number of GPUs used, and an estimate of the sustained single-precision floating-point capacity of each GPU 5."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "Abstract",
+                "text": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 Englishto-German translation task, improving over the existing best results, including ensembles, by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data. ∗Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea. Ashish, with Illia, designed and implemented the first Transformer models and has been crucially involved in every aspect of this work. Noam proposed scaled dot-product attention, multi-head attention and the parameter-free position representation and became the other person involved in nearly every detail. Niki designed, implemented, tuned and evaluated countless model variants in our original codebase and tensor2tensor. Llion also experimented with novel model variants, was responsible for our initial codebase, and efficient inference and visualizations. Lukasz and Aidan spent countless long days designing various parts of and implementing tensor2tensor, replacing our earlier codebase, greatly improving results and massively accelerating our research."
+            },
+            {
+                "source": "Attention_is_all_you_need.pdf",
+                "section": "7 Conclusion",
+                "text": "In this work, we presented the Transformer, the first sequence transduction model based entirely on attention, replacing the recurrent layers most commonly used in encoder-decoder architectures with multi-headed self-attention. For translation tasks, the Transformer can be trained significantly faster than architectures based on recurrent or convolutional layers. On both WMT 2014 English-to-German and WMT 2014 English-to-French translation tasks, we achieve a new state of the art. In the former task our best model outperforms even all previously reported ensembles. We are excited about the future of attention-based models and plan to apply them to other tasks. We plan to extend the Transformer to problems involving input and output modalities other than text and to investigate local, restricted attention mechanisms to efficiently handle large inputs and outputs such as images, audio and video. Making generation less sequential is another research goals of ours. The code we used to train and evaluate our models is available at https://github.com/ tensorflow/tensor2tensor."
+            }
+        ]
+    }
+]
