@@ -13,6 +13,7 @@ from weaviate.classes.query import Filter
 from weaviate.util import generate_uuid5
 from openai import OpenAI
 import os
+from pathlib import Path
 from weaviate.classes.init import Auth
 
 from PDF import PDF
@@ -25,6 +26,8 @@ COLLECTION_NAME = "Chunk"
 EMBEDDING_MODEL = "text-embedding-3-small"
 BATCH_SIZE = 100
 
+BASE_DIR = Path(__file__).resolve().parent
+DATA = BASE_DIR / "PDF"
 
 # --- Embedding ---------------------------------------------------------------
 def embeddings(client: OpenAI, texts: list[str]) -> list[list[float]]:
@@ -108,9 +111,7 @@ def count_chunks(collection) -> int:
 if __name__ == "__main__":
     client = weaviate.connect_to_weaviate_cloud(
         cluster_url=os.getenv("WEAVIATE_URL"),
-        auth_credentials=Auth.api_key(
-            api_key=os.getenv("WEAVIATE_API_KEY")
-        )
+        auth_credentials=Auth.api_key(api_key=os.getenv("WEAVIATE_API_KEY")),
     )
     openai_client = OpenAI()
     try:
@@ -118,22 +119,28 @@ if __name__ == "__main__":
 
         create_collection(client)
         collection = client.collections.use(COLLECTION_NAME)
+        chunker = Chunker()  
 
-        pdf = PDF.from_file("Attention_is_all_you_need.pdf")
-        chunks = Chunker().chunk_pdf(pdf)
-        print(len(chunks), "chunks produits")
-        
-        vectors = embeddings(openai_client, [chunk.text for chunk in chunks])
+        for pdf_path in DATA.glob("*.pdf"):  # uniquement les fichiers .pdf du dossier
+            pdf = PDF.from_file(str(pdf_path))
+            pdf.path = pdf_path.name  # on stocke le nom du fichier, pas le chemin complet
 
-        delete_pdf_chunks(collection, pdf.pdf_id)
-        insert_chunks(collection, chunks, vectors)  # sans vecteurs pour l'instant
+            chunks = chunker.chunk_pdf(pdf)
+            print(f"{pdf_path.name} : {len(chunks)} chunks")
+
+            vectors = embeddings(openai_client, [chunk.text_for_embedding() for chunk in chunks])
+
+            # Réindexation complète de ce PDF : on supprime ses anciens chunks, puis on insère les nouveaux
+            delete_pdf_chunks(collection, pdf.pdf_id)
+            insert_chunks(collection, chunks, vectors)
+
         print(count_chunks(collection), "objets dans Weaviate")
 
-        # Première recherche par mots-clés (BM25)
+        # Test rapide par mots-clés (BM25)
         results = collection.query.bm25(query="multi-head attention", limit=3)
         for obj in results.objects:
             p = obj.properties
-            print(f"\n[{p['section']} | p.{p['page_start']}-{p['page_end']}]")
+            print(f"\n[{p['source']} | {p['section']} | p.{p['page_start'] + 1}-{p['page_end'] + 1}]")
             print(p["text"][:200], "...")
     finally:
         client.close()
