@@ -139,11 +139,15 @@ python -m Benchmarks.benchmark
 
 ### Résultats
 
-*(À compléter : résultats sur les 28 questions et comparaison de plusieurs réglages, par exemple BM25 seul, recherche vectorielle seule et recherche hybride.)*
+Première mesure (28 questions, un seul passage, LLM juge `gpt-6-luna`) :
 
 | Configuration | Context recall | Faithfulness | Factual correctness |
 |---|---|---|---|
-| Hybride, `alpha = 0.5`, top 3 | – | – | – |
+| Hybride, `alpha = 0.5`, top 3 | 0,37 | 0,94 | 0,26 |
+
+**Lecture.** La fidélité est élevée : quand le système répond, il s'appuie sur les extraits retrouvés. Le point faible est la **recherche** : seulement 37 % de l'information nécessaire figure dans les 3 chunks retrouvés, ce qui limite l'exactitude des réponses (0,26). Les pistes ci-dessous visent donc d'abord le retrieval (titres de sections, nombre de chunks, filtre par document).
+
+*À compléter : comparaison de plusieurs réglages (BM25 seul, vecteurs seuls, `alpha`, top-k) pour mesurer l'effet de chaque amélioration.*
 
 ---
 

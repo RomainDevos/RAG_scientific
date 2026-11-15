@@ -12,6 +12,7 @@ from openai import OpenAI
 from ragas import EvaluationDataset, SingleTurnSample, evaluate
 from ragas.llms import llm_factory
 from ragas.metrics import FactualCorrectness, Faithfulness, LLMContextRecall
+from ragas.run_config import RunConfig
 
 from search import search
 from answer import answer
@@ -79,5 +80,7 @@ result = evaluate(
         LLMContextRecall(),
     ],
     llm=llm_judge,
+    # Peu de notations en parallèle et délai court : évite de saturer la limite de débit de l'API
+    run_config=RunConfig(max_workers=4, timeout=90, max_retries=3),
 )
 print(result)

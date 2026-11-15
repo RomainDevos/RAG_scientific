@@ -3,7 +3,7 @@
         "querry_id": "1",
         "querry": "Comment fonctionne la partie encodeur du Transformer ?",
         "reference": "Elle est composée de 6 couches identiques, chacune avec deux sous-couches : une couche d'attention multi-head, puis un réseau feed-forward. Chaque sous-couche est entourée d'une connexion résiduelle, suivie d'une normalisation : LayerNorm(x + Sublayer(x)).",
-        "response": "Dans DETR, l’encodeur reçoit les caractéristiques visuelles produites par le CNN. Une convolution 1×1 réduit leur nombre de canaux, puis les dimensions spatiales sont aplaties pour former une séquence de caractéristiques. (Transformer encoder, p. 6-7)\n\nComme le Transformer ne tient pas compte de l’ordre des éléments par lui-même, on ajoute un encodage positionnel spatial aux caractéristiques. Dans chaque couche d’attention multi-tête, cet encodage est ajouté aux requêtes et aux clés. (Transformer encoder, p. 6-7 ; A.3 Detailed architecture, p. 22)\n\nChaque couche d’encodeur comprend une attention multi-tête auto-régressive sur la séquence et un réseau feed-forward. L’encodeur transforme ainsi la séquence d’entrée en représentations continues, qui sont ensuite transmises au décodeur. (Transformer encoder, p. 6-7 ; extrait sur l’architecture encodeur-décodeur, p. 2-3)",
+        "response": "Dans DETR, l’encodeur reçoit les caractéristiques visuelles produites par le CNN. Une convolution 1×1 réduit leur nombre de canaux, puis les dimensions spatiales sont aplaties pour former une séquence de caractéristiques. (section « Transformer encoder », p. 6-7)\n\nL’encodeur traite cette séquence avec des couches comprenant chacune un mécanisme d’auto-attention multi-tête et un réseau feed-forward (FFN). Des encodages positionnels sont ajoutés pour préserver l’information spatiale, notamment aux requêtes et aux clés de chaque couche d’auto-attention. (section « Transformer encoder », p. 6-7 ; section A.3, p. 22)\n\nIl produit ainsi une séquence de représentations que le décodeur utilise ensuite pour prédire les classes et les boîtes englobantes. (section A.3, p. 22)",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "3.1",
         "retrieved": [
@@ -28,7 +28,7 @@
         "querry_id": "2",
         "querry": "Pourquoi divise-t-on les produits scalaires par la racine de d_k dans l'attention ?",
         "reference": "Pour de grandes valeurs de d_k, les produits scalaires deviennent grands et poussent le softmax dans des zones où les gradients sont extrêmement faibles. Le facteur 1/√d_k compense cet effet.",
-        "response": "Quand \\(d_k\\) est grand, les produits scalaires peuvent prendre de grandes valeurs et pousser le softmax dans des régions où ses gradients sont très faibles. On les divise donc par \\(\\sqrt{d_k}\\) pour contrer cet effet. (3.2.1 Scaled Dot-Product Attention, p. 4)",
+        "response": "On divise les produits scalaires par \\(\\sqrt{d_k}\\) parce que, lorsque \\(d_k\\) est grand, ils peuvent prendre de grandes valeurs et pousser le softmax dans des régions où ses gradients sont extrêmement faibles. Cette mise à l’échelle atténue cet effet. (3.2.1 Scaled Dot-Product Attention, p. 4)",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "3.2.1",
         "retrieved": [
@@ -53,7 +53,7 @@
         "querry_id": "3",
         "querry": "Quel matériel a été utilisé pour entraîner le Transformer ?",
         "reference": "Une machine équipée de 8 GPU NVIDIA P100.",
-        "response": "Les extraits ne précisent pas quel matériel a été utilisé pour entraîner le Transformer. Ils mentionnent les GPU K80, K40, M40 et P100 pour leurs valeurs de TFLOPS, sans indiquer lequel a servi à l’entraînement (section 6.2, p. 8-9).",
+        "response": "Les extraits ne précisent pas quel matériel a été utilisé pour entraîner le Transformer. Ils mentionnent seulement les GPU K80, K40, M40 et P100 pour leurs performances théoriques (section 6.2, p. 8-9).",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "5.2",
         "retrieved": [
@@ -78,7 +78,7 @@
         "querry_id": "4",
         "querry": "Quel optimiseur a été utilisé pour entraîner le Transformer, et avec quels paramètres ?",
         "reference": "Adam avec β1=0.9, β2=0.98 et ε=10^-9",
-        "response": "Je ne trouve pas dans les extraits quel optimiseur a été utilisé ni ses paramètres.",
+        "response": "Je ne trouve pas dans les extraits quel optimiseur a été utilisé ni quels étaient ses paramètres.",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "5.3",
         "retrieved": [
@@ -103,7 +103,7 @@
         "querry_id": "5",
         "querry": "Comment est calculé le learning rate pendant l'entraînement du Transformer ?",
         "reference": "Le learning rate est calculé avec la formule : lr = d_model^(-0.5) * min(step_num^(-0.5), step_num * warmup_steps^(-1.5))",
-        "response": "Le learning rate suit la formule  \n\\[\n\\text{lrate}=d_{\\text{model}}^{-0,5}\\times\\min(\\text{step\\_num}^{-0,5},\\ \\text{step\\_num}\\times\\text{warmup\\_steps}^{-1,5}).\n\\]\nIl augmente linéairement pendant les 4 000 premières étapes, puis diminue proportionnellement à l’inverse de la racine carrée du numéro d’étape. (5.3 Optimizer, p. 7)",
+        "response": "Le learning rate est calculé selon la formule  \n\\[\n\\text{lrate}=d_{\\text{model}}^{-0.5}\\times \\min\\left(\\text{step}^{-0.5},\\ \\text{step}\\times \\text{warmup\\_steps}^{-1.5}\\right).\n\\]\nIl augmente linéairement pendant les 4 000 premières étapes, puis diminue proportionnellement à l’inverse de la racine carrée du numéro d’étape. (5.3 « Optimizer », p. 7)",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "5.3",
         "retrieved": [
@@ -128,7 +128,7 @@
         "querry_id": "6",
         "querry": "Quelle est la différence entre RAG-Sequence et RAG-Token ?",
         "reference": "RAG-Sequence utilise le même document retrouvé pour générer toute la séquence. RAG-Token peut s'appuyer sur un document différent pour chaque token généré.",
-        "response": "RAG-Sequence utilise le même document récupéré pour prédire tous les tokens de la séquence cible. (2 Methods, p. 2–3) RAG-Token peut, lui, choisir un document latent différent pour chaque token et marginalise les prédictions sur les documents récupérés. (RAG-Token Model, p. 3)",
+        "response": "Dans **RAG-Sequence**, un même document récupéré sert à prédire tous les tokens de la séquence cible. Dans **RAG-Token**, chaque token cible peut être associé à un document différent, puis les prédictions sont marginalisées : le modèle peut ainsi combiner des informations provenant de plusieurs documents. (2 Methods, p. 2-3 ; RAG-Token Model, p. 3)",
         "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
         "expected_section": "2.1",
         "retrieved": [
@@ -153,7 +153,7 @@
         "querry_id": "7",
         "querry": "Quel retriever est utilisé dans RAG ?",
         "reference": "DPR (Dense Passage Retriever) : une architecture bi-encodeur avec deux BERT-base, un pour les documents et un pour les requêtes. Les documents les plus pertinents sont trouvés par recherche du produit scalaire maximal (MIPS).",
-        "response": "RAG utilise un **retriever dense** pour retrouver les passages pertinents (Retrieval Ablations, p. 7).",
+        "response": "RAG utilise un **retriever dense** \\(p_\\eta(z\\mid x)\\), qui récupère les passages les plus pertinents à partir de la requête \\(x\\) (section « Methods », p. 2–3 ; « Retrieval Ablations », p. 7).",
         "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
         "expected_section": "2.2",
         "retrieved": [
@@ -178,7 +178,7 @@
         "querry_id": "8",
         "querry": "Quel modèle sert de générateur dans RAG, et combien de paramètres a-t-il ?",
         "reference": "BART-large, un modèle seq2seq pré-entraîné d'environ 400 millions de paramètres.",
-        "response": "Le générateur est \\(p_\\theta\\), paramétré par \\(\\theta\\). (section 2 Methods, p. 2–3) Le nombre de ses paramètres n’est pas indiqué dans les extraits.",
+        "response": "Le générateur de RAG est le composant \\(p_\\theta\\), qui produit les tokens cibles à partir de l’entrée, du passage récupéré et des tokens précédents (2 Methods, p. 2-3). Le nombre de paramètres du générateur n’est pas indiqué dans les extraits.",
         "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
         "expected_section": "2.3",
         "retrieved": [
@@ -228,7 +228,7 @@
         "querry_id": "10",
         "querry": "Comment se fait le décodage avec RAG-Sequence ?",
         "reference": "Un beam search unique n'est pas possible. On fait un beam search pour chaque document, puis on combine les hypothèses : soit avec le Thorough Decoding (passes supplémentaires pour calculer les probabilités manquantes), soit avec le Fast Decoding (approximation qui évite ces passes).",
-        "response": "Avec RAG-Sequence, on récupère les *top K* documents, puis le générateur calcule la probabilité de la séquence complète pour chacun d’eux. (RAG-Sequence Model, p. 3) Ces probabilités sont pondérées par les probabilités du récupérateur et sommées afin de marginaliser le document latent; au décodage, on cherche à approximer l’argmax de \\(p(y\\mid x)\\). (RAG-Sequence Model, p. 3; 2.5 Decoding, p. 4)",
+        "response": "Avec RAG-Sequence, on récupère les K documents les mieux classés, puis le générateur calcule la probabilité de la séquence complète pour chacun d’eux. (RAG-Sequence Model, p. 3) On marginalise ensuite ces probabilités, pondérées par la probabilité de chaque document, afin d’approximer \\(p(y\\mid x)\\) et de choisir la séquence la plus probable. (RAG-Sequence Model, p. 3 ; 2.5 Decoding, p. 4)",
         "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
         "expected_section": "2.5",
         "retrieved": [
@@ -253,7 +253,7 @@
         "querry_id": "11",
         "querry": "Quelle source de connaissances utilise RAG, et comment est-elle découpée ?",
         "reference": "Un dump de Wikipédia de décembre 2018. Chaque article est découpé en morceaux disjoints de 100 mots, soit environ 21 millions de documents.",
-        "response": "RAG utilise un dump de Wikipédia de décembre 2018 comme source de connaissances non paramétrique. Chaque article est découpé en segments disjoints de 100 mots, pour un total de 21 millions de documents. (Experiments, p. 4)",
+        "response": "RAG utilise un dump de Wikipédia de décembre 2018 comme source de connaissances. Chaque article est découpé en segments disjoints de 100 mots, soit 21 millions de documents au total. (Experiments, p. 4)",
         "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
         "expected_section": "3",
         "retrieved": [
@@ -278,7 +278,7 @@
         "querry_id": "12",
         "querry": "Pour quelle tâche un retriever BM25 fait-il mieux que le retriever appris de RAG ?",
         "reference": "La vérification de faits (FEVER), probablement parce que ses affirmations sont très centrées sur des entités, ce qui favorise la recherche par mots-clés.",
-        "response": "Pour la tâche **FEVER**, le retriever BM25 fait mieux que le retriever appris de RAG. (Retrieval Ablations, p. 7)",
+        "response": "Pour la tâche **FEVER**, le retriever BM25 fait mieux que le retriever appris de RAG, probablement parce que les affirmations de FEVER sont fortement centrées sur les entités. (Retrieval Ablations, p. 7)",
         "expected_doc": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks, Lewis et al., 2020",
         "expected_section": "4.5",
         "retrieved": [
@@ -303,7 +303,7 @@
         "querry_id": "13",
         "querry": "Quels composants conçus à la main DETR supprime-t-il par rapport aux détecteurs classiques ?",
         "reference": "La suppression des non-maxima (NMS) et la génération d'ancres (anchors). DETR traite la détection comme un problème de prédiction directe d'un ensemble d'objets.",
-        "response": "DETR supprime plusieurs composants conçus à la main qui encodent des connaissances a priori, notamment les ancres spatiales et la suppression des prédictions non maximales (NMS) (Introduction, p. 2).",
+        "response": "DETR supprime plusieurs composants conçus à la main qui encodent des connaissances préalables, notamment les ancres spatiales et la suppression des prédictions non maximales (non-maximal suppression). (1 Introduction, p. 2)",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "1",
         "retrieved": [
@@ -328,7 +328,7 @@
         "querry_id": "14",
         "querry": "Comment DETR associe-t-il ses prédictions aux objets réels pendant l'entraînement ?",
         "reference": "Par un appariement biparti : l'algorithme hongrois trouve l'association un-à-un optimale entre prédictions et objets réels, avec un coût qui tient compte de la classe prédite et de la similarité des boîtes.",
-        "response": "Pendant l’entraînement, DETR utilise une perte d’ensemble qui réalise un appariement biparti entre les prédictions et les objets annotés : chaque objet réel est associé de façon unique à une prédiction, indépendamment de l’ordre des prédictions. (Introduction, p. 2) Pour les expériences de segmentation panoptique, cet appariement hongrois est calculé à partir des distances entre les boîtes. (4.4 DETR for panoptic segmentation, p. 15)",
+        "response": "Pendant l’entraînement, DETR utilise une perte de prédiction d’ensemble qui effectue un **appariement biparti** entre les prédictions et les objets annotés, en attribuant une prédiction unique à chaque objet réel. (Introduction, p. 2) Cet appariement hongrois est calculé à partir des distances entre les boîtes. (4.4 DETR for panoptic segmentation, p. 15–16)",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "3.1",
         "retrieved": [
@@ -353,7 +353,7 @@
         "querry_id": "15",
         "querry": "Quelle fonction de perte DETR utilise-t-il pour les boîtes englobantes ?",
         "reference": "Une combinaison linéaire de la perte L1 et de la perte generalized IoU (GIoU). La GIoU est invariante à l'échelle, contrairement à la L1 seule.",
-        "response": "Les extraits ne précisent pas la fonction de perte utilisée pour les boîtes englobantes. Ils indiquent seulement que l’appariement hongrois repose sur des distances entre boîtes (section 4.4, p. 15-16).",
+        "response": "Je ne trouve pas cette information dans les documents.",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "3.1",
         "retrieved": [
@@ -378,7 +378,7 @@
         "querry_id": "16",
         "querry": "Quels sont les principaux composants de l'architecture de DETR ?",
         "reference": "Un backbone CNN (ResNet) qui extrait les caractéristiques de l'image, un Transformer encodeur-décodeur, et des réseaux feed-forward (FFN) qui prédisent la classe et la boîte de chaque objet.",
-        "response": "L’architecture de DETR comporte trois composants principaux : un backbone CNN qui extrait une représentation compacte des caractéristiques, un transformer encodeur-décodeur, et un réseau feed-forward (FFN) qui produit les prédictions finales de détection (section 3.2, p. 6).",
+        "response": "L’architecture de DETR comporte trois composants principaux : un backbone CNN qui extrait les caractéristiques de l’image, un transformeur encodeur-décodeur, puis un réseau feed-forward (FFN) qui produit les prédictions finales de détection (section 3.2, p. 6).",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "3.2",
         "retrieved": [
@@ -403,7 +403,7 @@
         "querry_id": "17",
         "querry": "Que sont les object queries dans DETR, et comment le décodeur les traite-t-il ?",
         "reference": "Ce sont N encodages positionnels appris, donnés en entrée du décodeur. Chacun produit une prédiction. Le décodeur les traite toutes en parallèle, et non de façon autorégressive.",
-        "response": "Les *object queries* sont un petit nombre fixe d’embeddings positionnels appris, fournis au décodeur. (Fig. 2, p. 7) Le décodeur les associe à des requêtes initialement nulles et à la mémoire produite par l’encodeur. (A.3 Detailed architecture, p. 22)\n\nIl traite ces entrées par plusieurs couches d’auto-attention et d’attention entre le décodeur et l’encodeur, puis chaque sortie sert à prédire une classe et une boîte englobante — ou la classe « aucun objet ». (A.3 Detailed architecture, p. 22 ; Fig. 2, p. 7)",
+        "response": "Les **object queries** sont un petit nombre fixe d’**embeddings positionnels appris**, qui représentent les entrées du décodeur. (description de la Fig. 2, p. 7)\n\nDans le décodeur, les vecteurs de requête initiaux sont mis à zéro et les object queries sont fournis comme encodages positionnels de sortie, avec la mémoire produite par l’encodeur. (A.3, p. 22) Le décodeur les traite au moyen de plusieurs couches d’auto-attention et d’attention entre le décodeur et l’encodeur, puis ses sorties servent à prédire une classe et une boîte englobante, ou la classe « aucun objet ». (A.3, p. 22 ; description de la Fig. 2, p. 7)",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "3.2",
         "retrieved": [
@@ -428,7 +428,7 @@
         "querry_id": "18",
         "querry": "Quel matériel a servi à entraîner DETR, et combien de temps a duré l'entraînement ?",
         "reference": "16 GPU V100, avec 4 images par GPU (taille de batch totale de 64). L'entraînement du modèle de base sur 300 époques prend 3 jours.",
-        "response": "Je ne trouve pas ces informations dans les extraits fournis.",
+        "response": "Les extraits ne précisent ni le matériel utilisé pour entraîner DETR ni la durée de l’entraînement.",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "4",
         "retrieved": [
@@ -453,7 +453,7 @@
         "querry_id": "19",
         "querry": "Comment DETR se compare-t-il à Faster R-CNN sur COCO ?",
         "reference": "Les performances globales sont comparables. DETR est nettement meilleur sur les grands objets, mais moins bon sur les petits.",
-        "response": "Sur le sous-ensemble de validation COCO, DETR obtient **42 AP** et se montre compétitif avec Faster R-CNN à nombre de paramètres égal (41,3 millions). (4.1, p. 10) Son avantage vient surtout des grands objets, avec **+7,8 AP** pour cette catégorie, tandis qu’il reste en retrait sur les petits objets, avec **−5,5 AP**. (4.1, p. 10) DETR-DC5 obtient un AP supérieur, mais demeure lui aussi nettement derrière sur les petits objets ; avec un backbone ResNet-101, Faster R-CNN et DETR affichent des résultats comparables. (4.1, p. 10)",
+        "response": "Sur COCO, DETR obtient **42 AP** sur le sous-ensemble de validation et se montre compétitif avec Faster R-CNN à nombre de paramètres égal (41,3 millions). (4.1 Comparison with Faster R-CNN, p. 10)\n\nCette performance s’explique notamment par un meilleur résultat sur les grands objets (**+7,8 AP**), mais DETR reste en retrait sur les petits objets (**−5,5 AP**). (4.1 Comparison with Faster R-CNN, p. 10) DETR-DC5 affiche un AP supérieur, tout en restant lui aussi nettement derrière sur les petits objets ; avec un backbone ResNet-101, Faster R-CNN et DETR obtiennent des résultats comparables. (4.1 Comparison with Faster R-CNN, p. 10)",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "4.1",
         "retrieved": [
@@ -478,7 +478,7 @@
         "querry_id": "20",
         "querry": "Sur quel jeu de données DETR est-il évalué ?",
         "reference": "COCO 2017 (détection et segmentation panoptique), avec environ 118 000 images d'entraînement et 5 000 images de validation.",
-        "response": "DETR est évalué sur le jeu de données COCO. (4 Experiments, p. 8)",
+        "response": "DETR est évalué sur le jeu de données COCO, notamment pour la détection et la segmentation panoptique (section 4, p. 8 ; section 4.4, p. 15-16).",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "4",
         "retrieved": [
@@ -503,7 +503,7 @@
         "querry_id": "21",
         "querry": "À quoi servent les pertes auxiliaires dans le décodeur de DETR ?",
         "reference": "On ajoute des FFN de prédiction et la perte hongroise après chaque couche du décodeur. Cela aide le modèle à prédire le bon nombre d'objets de chaque classe.",
-        "response": "Je ne trouve pas cette information dans les extraits fournis.",
+        "response": "Les extraits ne précisent pas à quoi servent les pertes auxiliaires dans le décodeur de DETR. (sections 3.2, p. 6 ; 4.4, p. 14-16)",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "3.2",
         "retrieved": [
@@ -528,7 +528,7 @@
         "querry_id": "22",
         "querry": "DETR peut-il faire autre chose que de la détection d'objets ?",
         "reference": "Oui : en ajoutant une tête de prédiction de masques sur les sorties du décodeur, DETR fait de la segmentation panoptique.",
-        "response": "Oui. DETR peut aussi réaliser de la **segmentation panoptique** : on lui ajoute une tête de masques qui prédit un masque binaire pour chaque objet, et les masques sont réunis au niveau des pixels. (section 4.4, p. 14-15) Cette approche traite de manière unifiée les classes *things* et *stuff*. (section 4.4, p. 14-16)",
+        "response": "Oui. DETR peut aussi réaliser de la **segmentation panoptique** : un masque binaire est prédit pour chaque objet, puis les masques sont fusionnés. (section 4.4, p. 14-15) Cette approche traite de façon unifiée les classes « things » et « stuff ». (section 4.4, p. 14-16)",
         "expected_doc": "End-to-End Object Detection with Transformers, Carion et al., 2020",
         "expected_section": "4.4",
         "retrieved": [
@@ -553,7 +553,7 @@
         "querry_id": "23",
         "querry": "Combien de têtes d'attention utilise le Transformer de base, et quelle est la dimension de chaque tête ?",
         "reference": "8 têtes (h = 8), avec d_k = d_v = d_model / h = 64.",
-        "response": "Les extraits ne précisent ni le nombre de têtes d’attention du Transformer de base ni la dimension de chaque tête (A.1, p. 20 ; « Single head », p. 20-21).",
+        "response": "Les extraits ne précisent ni le nombre de têtes d’attention du Transformer de base ni la dimension de chacune (A.1, p. 20 ; « Single head », p. 20-21).",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "3.2.2",
         "retrieved": [
@@ -578,7 +578,7 @@
         "querry_id": "24",
         "querry": "Comment le Transformer encode-t-il la position des mots dans la séquence ?",
         "reference": "Avec des encodages positionnels basés sur des fonctions sinus et cosinus de fréquences différentes, ajoutés aux embeddings d'entrée.",
-        "response": "Le Transformer encode la position au moyen d’encodages positionnels, ajoutés aux représentations utilisées pour les requêtes et les clés avant le calcul de l’attention. Ces encodages peuvent être appris ou fixes et sont partagés entre les couches d’attention pour une même séquence (section « Single head », p. 20-21).",
+        "response": "Le Transformer ajoute des encodages positionnels aux représentations servant à former les requêtes et les clés, avant leur projection. Ces encodages peuvent être appris ou fixes, et sont partagés entre les couches d’attention pour une même séquence. (Single head, p. 20-21)\n\nLes extraits ne précisent pas davantage comment ces encodages positionnels sont construits.",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "3.5",
         "retrieved": [
@@ -603,7 +603,7 @@
         "querry_id": "25",
         "querry": "Pourquoi utiliser l'auto-attention plutôt que des couches récurrentes ou convolutives ?",
         "reference": "Pour trois raisons : le coût de calcul par couche, la part du calcul parallélisable (l'auto-attention relie toutes les positions avec un nombre constant d'opérations séquentielles) et la longueur du chemin entre deux positions éloignées, qui est constante, ce qui facilite l'apprentissage des dépendances à longue distance.",
-        "response": "L’auto-attention est privilégiée pour trois raisons : elle permet de comparer la complexité de calcul par couche, le degré de parallélisation et la longueur des chemins entre positions éloignées, cette dernière étant importante pour apprendre les dépendances à longue portée. (section 4 « Why Self-Attention », p. 6-7)\n\nContrairement aux couches récurrentes, qui nécessitent \\(O(n)\\) opérations séquentielles, une couche d’auto-attention relie toutes les positions avec un nombre constant d’opérations séquentielles. Elle est aussi plus rapide que les couches récurrentes lorsque la longueur de séquence \\(n\\) est inférieure à la dimension de représentation \\(d\\), situation décrite comme fréquente pour les représentations de phrases. (section 4 « Why Self-Attention », p. 6-7)\n\nLes extraits ne donnent pas de comparaison plus précise entre l’auto-attention et les couches convolutives. (section 4 « Why Self-Attention », p. 6-7)",
+        "response": "L’auto-attention est privilégiée selon trois critères : la complexité de calcul par couche, la quantité de calcul parallélisable et la longueur des chemins entre dépendances à longue distance. (4 Why Self-Attention, p. 6-7)\n\nElle relie toutes les positions avec un nombre constant d’opérations séquentielles, contrairement aux couches récurrentes, qui en nécessitent O(n). Des chemins plus courts peuvent aussi faciliter l’apprentissage des dépendances à longue distance. (4 Why Self-Attention, p. 6-7)\n\nEn calcul, l’auto-attention est plus rapide que les couches récurrentes lorsque la longueur de séquence n est inférieure à la dimension de représentation d, situation présentée comme fréquente pour les représentations de phrases. (4 Why Self-Attention, p. 6-7)\n\nLes extraits fournis ne précisent pas en détail les avantages de l’auto-attention par rapport aux couches convolutives. (4 Why Self-Attention, p. 6-7)",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "4",
         "retrieved": [
@@ -628,7 +628,7 @@
         "querry_id": "26",
         "querry": "Sur quelles données le Transformer a-t-il été entraîné pour la traduction anglais-allemand ?",
         "reference": "Le jeu WMT 2014 anglais-allemand, environ 4,5 millions de paires de phrases, encodées en byte-pair encoding avec un vocabulaire partagé d'environ 37 000 tokens.",
-        "response": "Les extraits indiquent que le Transformer a été évalué sur la tâche de traduction WMT 2014 anglais-allemand, mais ne précisent pas quelles données d’entraînement ont été utilisées (section 6.1, p. 8).",
+        "response": "Le Transformer a été évalué sur la tâche de traduction anglais-allemand WMT 2014, mais les extraits ne précisent pas les données exactes utilisées pour l’entraînement. (section 6.1, p. 8)",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "5.1",
         "retrieved": [
@@ -653,7 +653,7 @@
         "querry_id": "27",
         "querry": "Quelles techniques de régularisation sont utilisées pendant l'entraînement du Transformer ?",
         "reference": "Le dropout résiduel (P_drop = 0,1 pour le modèle de base) et le label smoothing (ε_ls = 0,1).",
-        "response": "L’extrait indique que trois types de régularisation sont utilisés, mais ne précise pas lesquels. (section 5.4, p. 7-8)",
+        "response": "L’extrait indique que trois types de régularisation sont utilisés, mais ne les précise pas. (section 5.4, p. 7-8)",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "5.4",
         "retrieved": [
@@ -678,7 +678,7 @@
         "querry_id": "28",
         "querry": "Quel score BLEU le grand Transformer obtient-il sur WMT 2014 anglais-allemand ?",
         "reference": "28,4 BLEU, soit plus de 2 points de mieux que les meilleurs modèles précédents, ensembles compris.",
-        "response": "Le grand Transformer obtient un score de **28,4 BLEU** sur WMT 2014 anglais-allemand (6.1, p. 8).",
+        "response": "Le grand Transformer obtient un score BLEU de **28,4** sur WMT 2014 anglais-allemand (section 6.1, p. 8).",
         "expected_doc": "Attention is all you need, Vaswani et al., 2017",
         "expected_section": "6.1",
         "retrieved": [
