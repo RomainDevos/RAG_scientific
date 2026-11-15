@@ -114,6 +114,42 @@ python -m streamlit run app.py
 
 ---
 
+## API REST
+
+Le RAG est aussi exposé comme service web (FastAPI) :
+
+```bash
+pip install fastapi
+uvicorn api:app --port 8000
+```
+
+La documentation interactive est disponible sur http://localhost:8000/docs.
+
+| Route | Rôle | Réponse |
+|---|---|---|
+| `GET /health` | Vérifie que le service et Weaviate répondent | `{"status": "ok"}` |
+| `POST /ask` | Pose une question | La réponse et la liste des sources (document, section, pages) |
+
+```bash
+curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" \
+     -d '{"question": "What hardware was used to train the Transformer?"}'
+```
+
+Les requêtes invalides (question vide, trop longue, champ manquant) renvoient une erreur `422`. En cas d'erreur interne, le client reçoit un message générique (`502`) et le détail reste dans les logs du serveur.
+
+---
+
+## Tests
+
+Les tests (pytest) couvrent le chunking et l'API. Ils n'utilisent ni clé API ni connexion réseau : Weaviate, OpenAI et le RAG sont simulés.
+
+```bash
+pip install pytest
+python -m pytest
+```
+
+---
+
 ## Évaluation
 
 Le système est évalué sur un benchmark de **28 questions** rédigées à partir des articles du corpus, chacune avec sa réponse de référence et la section où elle se trouve :
