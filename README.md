@@ -77,7 +77,7 @@ flowchart LR
 ## Installation
 
 ```bash
-git clone https://github.com/<ton-pseudo>/RAG_scientific.git
+git clone https://github.com/RomainDevos/RAG_scientific.git
 cd RAG_scientific
 python -m venv venv
 venv\Scripts\activate          # Windows
@@ -99,7 +99,7 @@ Il faut un compte OpenAI avec une clé API, et un cluster [Weaviate Cloud](https
 
 ## Utilisation
 
-**1. Indexer les articles** : place les PDF dans le dossier `PDF/`, puis :
+**1. Indexer les articles** : les PDF ne sont pas versionnés (fichiers ignorés par Git). Crée un dossier `PDF/` et place-y les trois articles du benchmark (*Attention Is All You Need*, *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*, *End-to-End Object Detection with Transformers*), nommés `Attention_is_all_you_need.pdf`, `RAG.pdf` et `DETR.pdf`. Puis :
 
 ```bash
 python indexer.py
@@ -133,7 +133,7 @@ Trois métriques [Ragas](https://docs.ragas.io) sont calculées, avec un LLM com
 - **Factual correctness** : la réponse est-elle juste par rapport à la référence ?
 
 ```bash
-pip install -r requirements-dev.txt
+pip install ragas
 python -m Benchmarks.benchmark
 ```
 
