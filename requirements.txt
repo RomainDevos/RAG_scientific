@@ -39,6 +39,7 @@ httpx-sse==0.4.3
 httpx2==2.13.1
 huggingface_hub==2.4.0
 idna==3.20
+iniconfig==2.3.1
 instructor==1.17.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
@@ -78,6 +79,7 @@ ormsgpack==1.12.2
 packaging==26.3
 pandas==2.3.3
 pillow==12.3.0
+pluggy==1.7.0
 propcache==0.5.4
 protobuf==6.33.6
 pyarrow==25.0.1
@@ -88,6 +90,7 @@ pydantic_core==2.50.1
 pydeck==0.9.3
 Pygments==2.21.0
 pymupdf==1.28.2
+pytest==9.2.0
 python-dateutil==3.0.0
 python-dotenv==1.2.4
 python-multipart==0.0.32
