@@ -1,0 +1,9 @@
+# Dépendances minimales pour faire tourner l'API (image Docker)
+fastapi==0.162.5
+uvicorn==0.54.0
+pydantic==2.14.1
+weaviate-client==4.24.1
+openai==3.3.0
+python-dotenv==1.2.4
+pymupdf==1.28.2
+tiktoken==0.14.0
